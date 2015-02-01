@@ -4,12 +4,15 @@
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
-// @icon         http://felizolinha.github.io/Icon.png
+// @icon         http://tgb-extension.github.io/Icon.png
 // @grant        GM_setClipboard
+// @grant 		 GM_addStyle
+// @grant  	     GM_getResourceText
 // @grant        unsafeWindow
-// @require      https://felizolinha.github.io/TGB/Plugins/math.min.js
-// @require      http://felizolinha.github.io/TGB/Plugins/sweet-alert.min.js
-//               JQuery color crashes the script. There will be some cool new Color blocks when I fix it!
+// @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
+// @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
+// @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
+//               jQuery Color crashes the script. There will be some cool new Color blocks when I fix it!
 //               http://code.jquery.com/color/jquery.color-2.1.2.min.js
 //               https://cdn.rawgit.com/AndreasSoiron/Color_mixer/master/color_mixer.js
 //               http://www.youtube.com/player_api
@@ -17,11 +20,16 @@
 // A huge thanks to the creators of ScratchExt, some block ideas came from their extension! I found out about Javascript extensions through GrannyCookies, without him this wouldn't be possible :)
 // If you want to check out ScratchExt too: http://www.stefanbates.com/bookmarklet.html
 // ==/UserScript==
+//CSS ////////////////////////////////////////////////////////////////////////////////////////
+
+GM_addStyle(GM_getResourceText("sweet-alert"));
+
 //Variables///////////////////////////////////////////////////////////////////////////////////
-var wait = 2.5,
-    TGB = {},
+var TGB = {},
+    wait = 2.5,
+    userLanguage = window.navigator.language, //Check for the userLanguage prop. also in case IE needs support.
     scratcher,
-    user_language,
+    language,
     keysPressed = [],
     keyDetection = false,
     online,
@@ -33,12 +41,16 @@ waitfor(isDataDefined, true, 100, function() {
     is_creator = data.user.username == data.project.creator;
     shared = !data.project.isPrivate;
     project_id = data.project.id;
-    remixed = data.project.parentId != null;
+    remixed = data.project.parentId !== null;
 });
 
 waitfor(isScratchDefined, true, 100, function() {
     admin = Scratch.INIT_DATA.ADMIN;
     notes = Scratch.INIT_DATA.PROJECT.model.notes;
+    // Semi-fix for sharing projects with extensions!
+    Scratch.Project.ShareBar.prototype.shareProject = function() {
+        this.model.share();
+    };
 });
     
 console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
@@ -62,7 +74,7 @@ if(!isPPAPI) {
 
 function isDataDefined() {
     try {
-        return data != undefined;
+        return data !== undefined;
     } catch(e) {
         return false;
     }
@@ -70,22 +82,61 @@ function isDataDefined() {
 
 function isScratchDefined() {
     try {
-        return Scratch != undefined;
+        return Scratch !== undefined;
     } catch(e) {
         return false;
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+//Wait for a condition to be true/////////////////////////////////////////////////////////////
 
-installCSS = function(url) {
-    var link = window.document.createElement('link');
-    link.href = url;
-    link.rel = 'stylesheet';
-    document.getElementsByTagName("HEAD")[0].appendChild(link);
-};
+function waitfor(test, expectedValue, msec, callback) {
+    while (test() !== expectedValue) {
+        setTimeout(function() {
+            waitfor(test, expectedValue, msec, callback);
+        }, msec);
+        return;
+    }
+    callback();
+}
 
-installCSS('https://felizolinha.github.io/TGB/Plugins/sweet-alert.css');
+//Checking if user is a New Scratcher/////////////////////////////////////////////////////////
+
+$.get( "http://scratch.mit.edu/internalapi/swf-settings/", function(data) {
+    scratcher = JSON.parse(data);
+    scratcher = scratcher.user_groups.indexOf('Scratchers') > -1;
+});
+
+//Key Checks//////////////////////////////////////////////////////////////////////////////////
+            
+function isKeyPressed(code) {
+  return keysPressed[code];
+}
+
+function menuCheck(key) {
+  switch(key) {
+    case 'shift':
+      return isKeyPressed(16);
+    case 'ctrl':
+      return isKeyPressed(17);
+    case 'enter':
+      return isKeyPressed(13);
+    case 'backspace':
+      return isKeyPressed(8);
+    case 'alt':
+      return isKeyPressed(18);
+    case 'tab':
+      return isKeyPressed(9);
+    case 'caps':
+      return isKeyPressed(20);
+    case 'esc':
+      return isKeyPressed(27);
+    case 'any':
+      return keysPressed.indexOf(true) > -1;
+    default:
+      return isKeyPressed(key_code.charCodeAt(0));
+  }
+}
 
 //Youtube/////////////////////////////////////////////////////////////////////////////////////
 //Block is not working, so I'll leave this disabled for now.
@@ -128,13 +179,6 @@ try {
   storage['!Cookie'] = 1; //Just a little Easter Egg :p
 } catch (exception) {}
 
-//Signed Decimal Fix//Thanks for explaining it to me, DadOfMrLog!///////////////////////////
-//Based on: http://stackoverflow.com/questions/6146177/convert-a-signed-decimal-to-hex-encoded-with-twos-complement
-
-function dec_fix(num) {
-    return parseInt(Number('0x' + (num < 0 ? (0xFFFFFFFF + num + 1).toString(16).slice(2) : num.toString(16))), 10);
-};
-
 //Esrever/////////////////////////////////////////////////////////////////////////////////////
 //By Mathias Bynens
 
@@ -161,32 +205,12 @@ var reverse = function(string) {
     return result;
 };
 
-//Semi-fix for sharing projects with extensions!//////////////////////////////////////////////
+//Signed Decimal Fix//Thanks for explaining it to me, DadOfMrLog!///////////////////////////
+//Based on: http://stackoverflow.com/questions/6146177/convert-a-signed-decimal-to-hex-encoded-with-twos-complement
 
-try {
-    Scratch.Project.ShareBar.prototype.shareProject = function() {
-        this.model.share();
-    };
-} catch(e) {}
-
-//Wait for a condition to be true/////////////////////////////////////////////////////////////
-
-function waitfor(test, expectedValue, msec, callback) {
-    while (test() !== expectedValue) {
-        setTimeout(function() {
-            waitfor(test, expectedValue, msec, callback);
-        }, msec);
-        return;
-    }
-    callback();
+function dec_fix(num) {
+    return parseInt(Number('0x' + (num < 0 ? (0xFFFFFFFF + num + 1).toString(16).slice(2) : num.toString(16))), 10);
 }
-
-//Checking if user is a New Scratcher/////////////////////////////////////////////////////////
-
-$.get( "http://scratch.mit.edu/internalapi/swf-settings/", function(data) {
-    scratcher = JSON.parse(data);
-    scratcher = scratcher.user_groups.indexOf('Scratchers') > -1;
-});
 
 //String Manipulation Functions///////////////////////////////////////////////////////////////
 
@@ -207,7 +231,7 @@ startsWith = function (a, str){
     
 function endsWith(a, str) {
     return a.slice(-str.length) == str;
-};
+}
     
 capitalize = function(b, str) {
     return b.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
@@ -791,7 +815,7 @@ TGB.installExtensionProgram = function () {
                 mode = mode.toLowerCase();
                 
                 if(mode == "fullscreen" || mode == "player" || mode == "editor") {
-                    if(hash != "") {
+                    if(hash !== "") {
                         window.location = url.replace(hash, '#' + mode);
                     } else {
                         window.location = url + '#' + mode;
@@ -966,15 +990,13 @@ TGB.installExtensionColor = function () {
                 switch(rgb) {
                     case "Blue":
                         return integer % 256;
-                        break;
                     case "Green":
                         return Math.floor(integer / 256) % 256;
-                        break;
                     case "Red":
                         return Math.floor(integer / 65536);
-                        break;
+                        
                 }
-            }
+            };
     
             /*ext.mix = function(color1, color2) {
                 //color_1 = $.Color(color2hex(color1));
@@ -999,6 +1021,7 @@ TGB.installExtensionUser = function () {
         var descriptor = {
             blocks: [
                 ['r', 'User Language', 'get_lang', ''],
+                ['r', 'Browser Language', 'get_browser_lang', ''],
                 ['r', 'Unread Notifications', 'get_notifications'],
                 ['-'],
                 ['b', 'New Scratcher?', 'new_scratcher'],
@@ -1011,6 +1034,10 @@ TGB.installExtensionUser = function () {
 
         ext.get_lang = function(callback) {
             return getCookie("scratchlanguage");
+        };
+        
+        ext.get_browser_lang = function() {
+         	return userLanguage;
         };
         
         ext.get_notifications = function() {
@@ -1141,7 +1168,7 @@ TGB.installExtensionStrings = function () {
         ext._shutdown = function() {};
 
         ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
+            return {status: 2, msg: 'Pro Tip: All of them are case sensitive!'};
         };
 
         var descriptor = {
@@ -1336,35 +1363,7 @@ TGB.installExtensionSensing = function () {
                         break;
                 }
             });
-            
-            function isKeyPressed(code) {
-                return keysPressed[code];
-            }
-            
-            function menuCheck(key) {
-                switch(key) {
-                    case 'shift':
-                        return isKeyPressed(16);
-                    case 'ctrl':
-                        return isKeyPressed(17);
-                    case 'enter':
-                        return isKeyPressed(13);
-                    case 'backspace':
-                        return isKeyPressed(8);
-                    case 'alt':
-                        return isKeyPressed(18);
-                    case 'tab':
-                        return isKeyPressed(9);
-                    case 'caps':
-                        return isKeyPressed(20);
-                    case 'esc':
-                        return isKeyPressed(27);
-                    case 'any':
-                        return keysPressed.indexOf(true) > -1;
-                    default:
-                        return isKeyPressed(key_code.charCodeAt(0));
-                }
-            }
+
             keyDetection = true;
         }
         
@@ -1386,26 +1385,36 @@ TGB.installExtensionSensing = function () {
         last_h_value = false;
     
         ext.h_check_key = function(key) {
-            if(!last_h_value && menuCheck(key) == true) {
-                last_h_value = true;
-                return true;
-            } else {
-                last_h_value = false;
-                return false;
-            }
+            if(document.activeElement === $('object#scratch')[0]) { //Check if Flash is focused. (Security Measure)
+                if(!last_h_value && menuCheck(key) === true) {
+                    last_h_value = true;
+                    return true;
+                } else {
+                    last_h_value = false;
+                    return false;
+                }
+            } //else isn't necessary here!
         };
     
         ext.check_key = function(key_code) {
-            if (isNaN(Number((key_code)))) {
-                return menuCheck(key_code);
+            if(document.activeElement === $('object#scratch')[0]) {
+                if (isNaN(Number((key_code)))) {
+                    return menuCheck(key_code);
+                } else {
+                    return isKeyPressed(key_code);
+                }
             } else {
-                return isKeyPressed(key_code);
+                return false;
             }
         };
 
         ext.which_key = function() {
-            key = keysPressed.indexOf(true);
-            return key;
+            if(document.activeElement === $('object#scratch')[0]) {
+                key = keysPressed.indexOf(true);
+                return key;
+            } else {
+                return -1;
+            }
         };
      
         ScratchExtensions.register('Sensing', descriptor, ext);
@@ -1512,7 +1521,11 @@ TGB.installExtensionData = function () {
         };
                 
         //Holder
-        Tips = ["You can use counters as local variables!", "To open Project and Discussion pages you have to use their respective ID's."];
+        Tips = [
+            "You can use counters as local variables!",
+            "To open Project and Discussion pages you have to use their respective ID's.",
+            "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
+        ];
         counters = {Help: Tips};
         
         //Blocks
@@ -1643,11 +1656,13 @@ waitfor(SWFready.isResolved, true, 100, function() {
         if(extensionSpecified) {
             chosenExtensions = OWstr.replace(/.(?!(\[?\u262f?((\w|\&| |,){1,})?\]))/g ,'');
             chosenExtensions = chosenExtensions.slice(chosenExtensions.indexOf('\u262f') + 1).split(',');
-            for(a in chosenExtensions) {
-                chosenExtensions[a] = chosenExtensions[a].trim();
-                if(extensions.indexOf('installExtension' + chosenExtensions[a]) === -1) {
-                    extensionSpecified = false;
-                    break;
+            for(var a in chosenExtensions) {
+                if (chosenExtensions.hasOwnProperty(a)) {
+                  chosenExtensions[a] = chosenExtensions[a].trim();
+                  if(extensions.indexOf('installExtension' + chosenExtensions[a]) === -1) {
+                      extensionSpecified = false;
+                      break;
+                  }
                 }
             }
         }
@@ -1676,20 +1691,26 @@ waitfor(SWFready.isResolved, true, 100, function() {
                     console.log('Loading Extensions...');
                     try {
                         if(extensionSpecified) {
-                            for(i in chosenExtensions) {
-                                console.log('Installing extension ' + chosenExtensions[i]);
-                                TGB['installExtension' + chosenExtensions[i]]();
+                            for(var i in chosenExtensions) {
+                              if (chosenExtensions.hasOwnProperty(i)) {
+                              	console.log('Installing extension ' + chosenExtensions[i]);
+                              	TGB['installExtension' + chosenExtensions[i]]();
+                              }
                             }
                         } else {
-                            for(i in extensions) {
-                                console.log('Installing extension ' + extensions[i].slice(16));
-                                TGB[extensions[i]]();
+                            for(var ext in extensions) {
+                              if (extensions.hasOwnProperty(ext)) {
+                                console.log('Installing extension ' + extensions[ext].slice(16));
+                                TGB[extensions[ext]]();
+                              }
                             }
                         }
                     } catch(e) {
-                        for(i in extensions) {
+                        for(var i in extensions) {
+                          if (extensions.hasOwnProperty(i)) {
                             console.log('Installing extension ' + extensions[i].slice(16));
                             TGB[extensions[i]]();
+                          }
                         }
                     }
                     console.log('Extensions loaded!');
@@ -1699,7 +1720,7 @@ waitfor(SWFready.isResolved, true, 100, function() {
         });
     });
     
-    if(Scratch.FlashApp.model.attributes.isPublished == false) {
+    if(Scratch.FlashApp.model.attributes.isPublished === false) {
         JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
     }
     
@@ -1707,7 +1728,7 @@ waitfor(SWFready.isResolved, true, 100, function() {
     searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
     numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
     
-    if(searchAddition != false) {
+    if(searchAddition !== false) {
         if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
             $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
         } else {
