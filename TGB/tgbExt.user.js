@@ -52,7 +52,7 @@ waitfor(isScratchDefined, true, 100, function() {
         this.model.share();
     };
 });
-    
+
 console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
 commentAddition = ["Please read the instructions before commenting! Thanks :)", "Please use the forum to post your scores!", "Feel free to make your requests here!", "Please use my profile to make requests! Thanks :)", "Thanks for commenting! :)"];
 
@@ -108,7 +108,7 @@ $.get( "http://scratch.mit.edu/internalapi/swf-settings/", function(data) {
 });
 
 //Key Checks//////////////////////////////////////////////////////////////////////////////////
-            
+
 function isKeyPressed(code) {
   return keysPressed[code];
 }
@@ -154,15 +154,13 @@ function menuCheck(key) {
         'left': 15 + x + 'px'
     });
 };
-
 // Autoplay video
 function onPlayerReady(event) {
     event.target.playVideo();
 }
-
 // When video ends
-function onPlayerStateChange(event) {        
-    if(event.data === 0) {            
+function onPlayerStateChange(event) {
+    if(event.data === 0) {
         $("#YTplayer").remove();
     }
 }*/
@@ -224,23 +222,23 @@ capitalizeFirstLetter = function (string) {
 contains = function (a, str){
     return a.indexOf(str) > -1;
 };
-    
+
 startsWith = function (a, str){
     return a.slice(0, str.length) == str;
 };
-    
+
 function endsWith(a, str) {
     return a.slice(-str.length) == str;
 }
-    
+
 capitalize = function(b, str) {
     return b.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
 };
-    
+
 shuffle = function (k, str) {
     var a = k.split(""),
     n = a.length;
-        
+
     for(var i = n - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
         var tmp = a[i];
@@ -273,7 +271,7 @@ shuffle = function (k, str) {
         } catch (e) {
             return false;
         }
-            
+
         setInterval(function() {online = serverReachable();}, 3000);
     }
 }*/
@@ -379,13 +377,13 @@ console.log('Waiting ' + wait + ' secs...');
 
 TGB.installExtensionOperators = function () {
     (function(ext) {
-        
+
         ext._shutdown = function() {};
 
         // Status reporting code
         // Use this to report missing hardware, plugin or unsupported browser
         ext._getStatus = function() {return {status: 2, msg: 'Installed'};};
-        
+
         // Block and block menu descriptions
         var descriptor = {
             blocks: [
@@ -414,7 +412,7 @@ TGB.installExtensionOperators = function () {
                 ['r', '%n %m.radgrees to %m.radgrees', 'radgrees', 180, 'Degrees', 'Radians'],
                 ['r', '%n %m.degrees to %m.degrees', 'degrees', 0, 'K', '°C']
             ],
-            
+
             menus: {
                 compare: ["\u2264", "\u2265", "\u2260"],
                 constants: ["Pi", "Phi"],
@@ -423,13 +421,13 @@ TGB.installExtensionOperators = function () {
                 degrees: ["°C", "°F", "K"],
             }
         };
-        
+
         // Blocks
-     
+
         ext.power = function(base, exponent) {
             return Math.pow(base, exponent);
         };
-    
+
         ext.nth_root = function(n, x) {
             if(!(isNaN(n) || isNaN(x))) {
                 if(n === Infinity || x === Infinity) {
@@ -452,17 +450,17 @@ TGB.installExtensionOperators = function () {
                 return NaN;
             }
         };
-    
+
         ext.evaluate = function(s) {
           return math.format(math.eval(s), 16);
         };
-        
+
         ext.atan2 = function(x, y) {
           return Math.atan2(x, y) * 180 / Math.PI;
         };
-        
+
         ext.compare = function(a, type, b) {
-          
+
           switch(type) {
             case "\u2260":
               return a != b;
@@ -472,7 +470,7 @@ TGB.installExtensionOperators = function () {
               return a >= b;
           }
         };
-        
+
         ext.equals_to = function(a, b) {
             var c = Number(a);
             var d = Number(b);
@@ -482,23 +480,23 @@ TGB.installExtensionOperators = function () {
                 return (c === d) ? true : false;
             }
         };
-    
+
         ext.xor = function(a,b){
           return Boolean(a ^ b);
         };
-        
+
         ext.b_true = function() {
           return true;
         };
-    
+
         ext.as_bool = function(b) {
             return isNaN(b) ? !!b : !!Number(b);
         };
-        
+
         ext.random_bool = function(n) {
             return math.random(0, 100) < n;
         };
-    
+
         ext.type_of = function(a, b) {
             switch(b) {
                 case "number":
@@ -515,7 +513,7 @@ TGB.installExtensionOperators = function () {
                     return (typeof(a) == "boolean") ? true : false;
             }
         };
-    
+
         ext.reporter_if = function(b, opt1, opt2) {
             return b ? opt1 : opt2;
         };
@@ -523,13 +521,13 @@ TGB.installExtensionOperators = function () {
         ext.constants = function(p) {
             return (p=="Pi") ? Math.PI : (1 + Math.sqrt(5))/2;
         };
-    
+
         ext.round_places = function(n, places) {
           places = Math.round(places);
           n = Number(n);
             return math.round(n, places);
         };
-        
+
         ext.within = function(n, a, b) {
           if(isNaN(n) || isNaN(a) || isNaN(b)) {
             return "NaN";
@@ -549,7 +547,7 @@ TGB.installExtensionOperators = function () {
             }
           }
         };
-    
+
         ext.radgrees = function(n, type1, type2) {
           if(type1 == "Degrees") {
             return (type2 == "Radians") ? n * Math.PI / 180 : n;
@@ -557,7 +555,7 @@ TGB.installExtensionOperators = function () {
             return (type2 == "Degrees") ? n * 180 / Math.PI : n;
           }
         };
-            
+
         ext.degrees = function(n, degrees_from, degrees_to) {
           //C / 5 = (F - 32) / 9 = (K - 273.15) / 5
           switch(degrees_from) {
@@ -623,7 +621,7 @@ TGB.installExtensionUI = function () {
                 confirm: ['warning', 'info', '']
             }
         };
-        
+
         ext.TGBox_in = function(title, description, callback) {
             if($("#TGBox").length) {
                 if ($("#TGBox").css("left") !== "-247px") {
@@ -645,7 +643,7 @@ TGB.installExtensionUI = function () {
                 TGBox_out();
             });
         };
-        
+
         ext.SweetAlert = function(title, description, type, callback) {
             swal({
                 title: title,
@@ -658,7 +656,7 @@ TGB.installExtensionUI = function () {
                 callback();
             });
         };
-    
+
         /*ext.SweetPrompt = function(title, description, placeholder, dflt, callback) {
             swal({
                 type: "prompt",
@@ -671,7 +669,7 @@ TGB.installExtensionUI = function () {
                 callback(value);
             });
         };*/
-    
+
         ext.SweetConfirm = function(title, description, yes, no, type, callback) {
             swal({
                 title: title,
@@ -689,19 +687,19 @@ TGB.installExtensionUI = function () {
                   }
             });
         };
-        
+
         ext.alert = function(str) {
             alert(str);
         };
-        
+
         ext.prompt = function(str) {
             return prompt(str);
         };
-        
+
         ext.confirm = function(str) {
             return confirm(str);
         };
-     
+
         ScratchExtensions.register('UI', descriptor, ext);
     })({});
 };
@@ -714,6 +712,8 @@ TGB.installExtensionProgram = function () {
         ext._getStatus = function() {
             return {status: 2, msg: 'Installed'};
         };
+
+		var default_profile = (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder";
 
         var descriptor = {
             blocks: [
@@ -731,7 +731,7 @@ TGB.installExtensionProgram = function () {
                 ['r', 'Amount of Comments', 'comments', ''],
                 ['-'],
                 ['r', 'View Mode', 'mode'],
-                [' ', 'Switch to %m.views mode', 'switch_to', 'Player'], 
+                [' ', 'Switch to %m.views mode', 'switch_to', 'Player'],
                 [' ', 'Fullscreen Switch', 'fullscreen'],
                 ['-'],
                 ['w', 'Set clipboard to %s', 's_clip', 'Support!'],
@@ -740,7 +740,7 @@ TGB.installExtensionProgram = function () {
                 ['r', 'Tab Title', 'title'],
                 [' ', 'Set Tab Title to %s', 'set_tab', document.title],
                 ['-'],
-                ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', data.project.creator],
+                ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', default_profile],
                 //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
                 ['-'],
                 ['h', 'when %b is true', 'whentrue'],
@@ -748,7 +748,7 @@ TGB.installExtensionProgram = function () {
                 ['l', '%s', '', 'Comment'],
                 [' ', 'Log %s', 'log', 'to the console.']
             ],
-            
+
             menus: {
                 open: ["user profile of", "Project", "Discussion"],
                 views: ["Fullscreen", "Player", "Editor"],
@@ -756,46 +756,50 @@ TGB.installExtensionProgram = function () {
         };
 
             ext.proj_title = function() {
-                return (is_creator) ? document.getElementsByName("title")[0].value : document.getElementById("title").innerHTML;
+                if(typeof is_creator !== "undefined") {
+                    return (is_creator) ? document.getElementsByName("title")[0].value : document.getElementById("title").innerHTML;
+                } else {
+                    return false;
+                }
             };
-    
+
             ext.proj_id = function() {
                 return project_id;
             };
-    
+
             ext.info = function() {
                 return Scratch.INIT_DATA.PROJECT.model.credits;
             };
-    
+
             ext.notes = function() {
                 return notes;
             };
-            
+
             /*ext.lst_upd = function() {
-                
+
             };*/
-        
+
             ext.shared = function() {
                 return shared;
             };
-        
+
             ext.remixed = function() {
                 return remixed;
             };
-    
+
             ext.sprites = function() {
                 return $("#sprite-count").html();
             };
-            
+
             ext.scripts = function() {
                 return $("#script-count").html();
             };
-        
+
             ext.comments = function() {
                 n = $("h4:contains('Comments')").html();
                 return n.substring(n.lastIndexOf("(")+1,n.lastIndexOf(")"));
             };
-            
+
             ext.mode = function() {
                 var a = document.URL;
                 var b = a.substr((a.length - 7), (a.length - 1));
@@ -808,12 +812,12 @@ TGB.installExtensionProgram = function () {
                         return "Player";
                 }
             };
-    
+
             ext.switch_to = function(mode) {
                 var url = document.URL;
                 var hash = window.location.hash.toLowerCase();
                 mode = mode.toLowerCase();
-                
+
                 if(mode == "fullscreen" || mode == "player" || mode == "editor") {
                     if(hash !== "") {
                         window.location = url.replace(hash, '#' + mode);
@@ -822,11 +826,11 @@ TGB.installExtensionProgram = function () {
                     }
                 }
             };
-    
+
             ext.fullscreen = function() {
                 var url = document.URL;
                 var hash = window.location.hash.toLowerCase();
-                
+
                 if(hash == "#player") {
                     window.location = url.replace(hash, '#fullscreen');
                 }
@@ -837,7 +841,7 @@ TGB.installExtensionProgram = function () {
                     window.location = url + "#fullscreen";
                 }
             };
-    
+
             ext.s_clip = function(str, callback) {
                 swal({
                       title: "Clipboard",
@@ -855,21 +859,21 @@ TGB.installExtensionProgram = function () {
                     }
                 });
             };
-            
+
             // I couldn't find a solution to read the clipboard without a paste event in Chrome, so I'll leave it disabled.
             /*ext.r_clip = function() {
                 console.log(unsafeWindow.clipboardData.getData("Text"));
                 return unsafeWindow.clipboardData.getData("Text");
             }*/
-        
+
             ext.title = function() {
                 return document.title;
             };
-            
+
             ext.set_tab = function(str) {
                 document.title = str;
             };
-        
+
             ext.TGB_open = function(type, src, callback) {
                 switch(type) {
                     case "user profile of":
@@ -906,11 +910,11 @@ TGB.installExtensionProgram = function () {
                     }
                 });
             };
-        
+
             ext.log = function(msg) {
                 console.log(msg);
             };
-    
+
             /*YTplayer;
             ext.youtube = function(videoID, x, y) {
                 $("#YTplayer").remove();
@@ -926,9 +930,9 @@ TGB.installExtensionProgram = function () {
                     }
                 });
             };*/
-            
+
             ext.when_true = function(bool) {return bool;};
-     
+
         ScratchExtensions.register('Program & Web', descriptor, ext);
     })({});
 };
@@ -950,15 +954,15 @@ TGB.installExtensionColor = function () {
                 ['r', 'Hex%s to color', 'hex2color', '#ffffff'],
                 ['r', 'R:%s G:%s B:%s', 'rgb2color', 255, 255, 255],
                 ['-'],
-                ['r', '%m.rgb of %c', 'color2rgb', 'Red'], 
+                ['r', '%m.rgb of %c', 'color2rgb', 'Red'],
             ],
-            
+
             menus: {
                 rgb: ["Red", "Green", "Blue"],
             },
         };
             ext.color = function(integer) {return integer;};
-                
+
             ext.hex2color = function(s) {
                 if(s.charAt(0) != '#') {
                     s = '#' + s;
@@ -971,7 +975,7 @@ TGB.installExtensionColor = function () {
                     console.log('Invalid hex color:' + s);
                 }
             };
-                
+
             ext.rgb2color = function(r, g ,b) {
                 r = Number(r);
                 g = Number(g);
@@ -983,7 +987,6 @@ TGB.installExtensionColor = function () {
                 }
             };
 
-    
             //256^2*r + 256*g + b = RGB Integer
             ext.color2rgb = function(rgb,  integer) {
                 integer = dec_fix(integer);
@@ -994,17 +997,17 @@ TGB.installExtensionColor = function () {
                         return Math.floor(integer / 256) % 256;
                     case "Red":
                         return Math.floor(integer / 65536);
-                        
+
                 }
             };
-    
+
             /*ext.mix = function(color1, color2) {
                 //color_1 = $.Color(color2hex(color1));
                 //color_2 = $.Color(color2hex(color2));
                 //return hex2color(Color_mixer.mix(color_1, color_2));
                 return ;
             };*/
-     
+
         ScratchExtensions.register('Color', descriptor, ext);
     })({});
 };
@@ -1013,7 +1016,7 @@ TGB.installExtensionUser = function () {
     (function(ext) {
 
         ext._shutdown = function() {};
-        
+
         ext._getStatus = function() {
             return {status: 2, msg: 'Installed'};
         };
@@ -1035,11 +1038,11 @@ TGB.installExtensionUser = function () {
         ext.get_lang = function(callback) {
             return getCookie("scratchlanguage");
         };
-        
+
         ext.get_browser_lang = function() {
          	return userLanguage;
         };
-        
+
         ext.get_notifications = function() {
             return $(".notificationsCount").html();
             // Old way. It was able to return if the user had a new message even before he knew it through the Scratch website,
@@ -1049,19 +1052,19 @@ TGB.installExtensionUser = function () {
                 callback(notifications);
             });*/
         };
-                
+
         ext.new_scratcher = function() {
             return !scratcher;
         };
-        
+
         ext.creator = function() {
-            return is_creator;
+            return (typeof is_creator !== "undefined") ? is_creator : "Unknown Author";
         };
-                
+
         ext.admin = function() {
             return admin;
         };
-        
+
         ext.online = function() {
             //"if" disabled until Firefox version comes out.
             /*if(contains(navigator.userAgent, "Firefox")) {
@@ -1070,7 +1073,7 @@ TGB.installExtensionUser = function () {
             return window.navigator.onLine;
             //}
         };
-     
+
         ScratchExtensions.register('User', descriptor, ext);
     })({});
 };
@@ -1083,6 +1086,8 @@ TGB.installExtensionSpeech = function () {
             return {status: 2, msg: 'Installed'};
         };
 
+		var default_username = (typeof data !== "undefined") ? data.user.username : "a visitor";
+
         var descriptor = {
             blocks: [
                 ['r', 'Voice', 'voice_lang'],
@@ -1090,7 +1095,7 @@ TGB.installExtensionSpeech = function () {
                 [' ', 'Set voice to %m.voices', 'set_voice', 'Google US English'],
                 [' ', 'Set voice to %n', 'set_voice'],
                 ['-'],
-                [' ', 'Speak %s', 'speak_text', 'You are ' + data.user.username],
+                [' ', 'Speak %s', 'speak_text', 'You are ' + default_username],
                 ['w', 'Speak %s and wait', 'speak_wait', 'You are a ' + (scratcher ? 'Scratcher' : 'New Scratcher')],
                 ['-'],
                 [' ', 'Pause speech', 'pause_voice'],
@@ -1104,67 +1109,67 @@ TGB.installExtensionSpeech = function () {
                 voices: _get_voices(),
             }
         };
-     
+
         //This script was started by Sayamindu, I finished and improved it!
         lang = "Google US English";
         ext.voice_lang = function() {
             return lang;
         };
-    
+
         ext.speak_text = function (text) {
             var say = new SpeechSynthesisUtterance(text.toString()),
                 voices = window.speechSynthesis.getVoices();
             say.voice = voices.filter(function(voice) { return voice.name == lang; })[0];
             speechSynthesis.speak(say);
         };
-    
+
         ext.set_voice = function(gname) {
             var g = parseInt(gname, 10),
                 voices = speechSynthesis.getVoices();
             lang = (isNaN(g) === false) ? ((0 < g <= voices.length) ? voices[g - 1].name : console.log("Voice #" + g + " not found.")) : lang = gname;
         };
-    
+
         ext.pause_voice = function () {
             speechSynthesis.pause();
         };
-        
+
         ext.resume_voice = function () {
             speechSynthesis.resume();
         };
-        
+
         ext.cancel_voice = function () {
             speechSynthesis.cancel();
         };
-        
+
         ext.check_speech = function() {
             return speechSynthesis.speaking;
         };
-        
+
         ext.speak_wait = function (text, callback) {
             ext.speak_text(text);
             waitfor(ext.check_speech, false, 100, function() {
                 callback();
             });
         };
-        
+
         function _get_voices() {
             var ret = [];
             var voices = speechSynthesis.getVoices();
-                
+
             for(var i = 0; i < voices.length; i++ ) {
                  ret.push(voices[i].name);
             }
-            
+
             return ret;
         }
-     
+
         ScratchExtensions.register('Speech', descriptor, ext);
     })({});
 };
 
 TGB.installExtensionStrings = function () {
     (function(ext) {
-        
+
         ext._shutdown = function() {};
 
         ext._getStatus = function() {
@@ -1204,7 +1209,7 @@ TGB.installExtensionStrings = function () {
                 str_functions: ["Capitalize", "Capitalize All Of", "Uppercase", "Lowercase", "Reverse", "Shuffle", "Trim blanks of"],
             }
         };
-    
+
         ext.sub_string = function(a, b, c) {
             a = String(a);
             return a.substring((b - 1), c);
@@ -1220,7 +1225,7 @@ TGB.installExtensionStrings = function () {
                     return endsWith(str1, str2);
             }
         };
-        
+
         ext.up_low = function(str, cases) {
             str = String(str);
             switch(cases) {
@@ -1234,7 +1239,7 @@ TGB.installExtensionStrings = function () {
                     return /^[\w\d]*$/.test(str);
             }
         };
-    
+
         ext.string_functions = function(type, str) {
            str = String(str);
            switch(type) {
@@ -1254,23 +1259,23 @@ TGB.installExtensionStrings = function () {
                    return str.trim();
             }
         };
-    
+
         ext.times_is_in = function(a, b) {
             return b.match(new RegExp(a, "g")).length;
         };
-        
+
         ext.find_starting_at = function (a, b, c) {
             return a.indexOf(b, parseInt(c) - 1) + 1;
         };
-    
+
         ext.replace_substr = function(a, b, str, sub_string) {
             return str.substr(0, a - 1) + sub_string + str.substr(b);
         };
-    
+
         ext.replace_every = function(a, b, str) {
             return str.split(a).join(b);
         };
-    
+
         ext.repeat = function (str, times, sep) {
             if(times > 0) {
                 times = Math.round(times);
@@ -1283,7 +1288,7 @@ TGB.installExtensionStrings = function () {
                 return "";
             }
         };
-    
+
         //Chance.js Function
         ext.pad = function (number, pad, width) {
             // Default pad to 0 if none provided
@@ -1292,7 +1297,7 @@ TGB.installExtensionStrings = function () {
             number = number + "";
             return number.length >= width ? number : new Array(width - number.length + 1).join(pad) + number;
          };
-    
+
         ext.word = function(n, str) {
             if(!isNaN(n)) {
                 n = Math.round(n);
@@ -1302,44 +1307,44 @@ TGB.installExtensionStrings = function () {
                 return "";
             }
         };
-        
+
         ext.word_amount = function(str) {
             return str.split(" ").length;
         };
-        
+
         ext.word_pos = function(word, str) {
             console.log(str.split(" "));
             return str.split(" ").indexOf(word) + 1;
         };
-        
+
         ext.to_unicode = function(n, str) {
           return str.charCodeAt(n-1);
         };
-        
+
         ext.from_unicode = function(u) {
           if(u < 1) {
               return 'undefined';
           }
           return String.fromCharCode(Number(u));
         };
-    
+
         ext.toAscii = function(bin) {
             return bin.replace(/\s*[01]{8}\s*/g, function(bin) {
                 return String.fromCharCode(parseInt(bin, 2));
             });
         };
-    
+
         zeroPad = function(num) {
             return "00000000".slice(String(num).length) + num;
         };
-        
+
         ext.toBinary = function(str, spaceSeparatedOctets) {
             return str.replace(/[\s\S]/g, function(str) {
                 str = zeroPad(str.charCodeAt().toString(2));
                 return (!1 == spaceSeparatedOctets) ? str : str + " ";
             });
         };
-    
+
         ScratchExtensions.register('Strings', descriptor, ext);
     })({});
 };
@@ -1351,7 +1356,7 @@ TGB.installExtensionSensing = function () {
         ext._getStatus = function() {
             return {status: 1, msg: 'May be Laggy'};
         };
-        
+
         if(keyDetection === false) {
             $(document).on("keyup keydown", function(e) {
                 switch(e.type) {
@@ -1366,7 +1371,7 @@ TGB.installExtensionSensing = function () {
 
             keyDetection = true;
         }
-        
+
         var descriptor = {
             blocks: [
                 ['h', 'when key %m.keys is pressed', 'h_check_key', 'shift'],
@@ -1376,14 +1381,14 @@ TGB.installExtensionSensing = function () {
                 ['-'],
                 ['r', 'Which key is pressed?', 'which_key']
             ],
-                
+
             menus: {
                 keys: ['shift', 'ctrl', 'enter', 'backspace', 'alt', 'tab', 'caps', 'esc', 'any'],
             }
         };
-     
+
         last_h_value = false;
-    
+
         ext.h_check_key = function(key) {
             if(document.activeElement === $('object#scratch')[0]) { //Check if Flash is focused. (Security Measure)
                 if(!last_h_value && menuCheck(key) === true) {
@@ -1395,7 +1400,7 @@ TGB.installExtensionSensing = function () {
                 }
             } //else isn't necessary here!
         };
-    
+
         ext.check_key = function(key_code) {
             if(document.activeElement === $('object#scratch')[0]) {
                 if (isNaN(Number((key_code)))) {
@@ -1416,7 +1421,7 @@ TGB.installExtensionSensing = function () {
                 return -1;
             }
         };
-     
+
         ScratchExtensions.register('Sensing', descriptor, ext);
     })({});
 };
@@ -1439,7 +1444,7 @@ TGB.installExtensionDate = function () {
                 types: ["Hours", "Minutes", "Seconds", "Day of the Week", "Date", "Month", "Year"],
             }
         };
-     
+
          ext.UTC = function(type) {
             var d = new Date();
             switch(type) {
@@ -1484,7 +1489,7 @@ TGB.installExtensionDate = function () {
                     return day;
             }
         };
-        
+
         ext.timezone = function() {
             var d = new Date();
             return d.getTimezoneOffset();
@@ -1519,7 +1524,7 @@ TGB.installExtensionData = function () {
                 [' ', 'Delete all cookies', 'd_all_cookies']
             ]
         };
-                
+
         //Holder
         Tips = [
             "You can use counters as local variables!",
@@ -1527,7 +1532,7 @@ TGB.installExtensionData = function () {
             "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
         ];
         counters = {Help: Tips};
-        
+
         //Blocks
         ext.counter = function(name) {
             if(name != 'Help' || counters.Help != Tips) {
@@ -1536,29 +1541,29 @@ TGB.installExtensionData = function () {
                 return math.pickRandom(counters.Help);
             }
         };
-        
+
         ext.cookie = function(name) {
             if (storage) {
                 return storage[name];
             }
         };
-        
+
         ext.s_counter = function(name, val) {
             if(Object.keys(counters).length <= 50001) {
-                /*if(is_creator) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Counter '" + name + "' set to '" + val + "'.");
                 }*/
                 counters[name] = val;
             } else {
-                if(is_creator) {
+                if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Too many counters.");
                 }
             }
         };
-        
+
         ext.i_counter = function(name, val) {
             if(Object.keys(counters).length <= 50001) {
-                /*if(is_creator) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Counter '" + name + "' increased by '" + val + "'.");
                 }*/
                 if(typeof counters[name] != "undefined") {
@@ -1567,44 +1572,44 @@ TGB.installExtensionData = function () {
                     counters[name] = val;
                 }
             }
-            else if(is_creator) {
+            else if(typeof is_creator !== "undefined" && is_creator) {
                 console.log("Too many counters.");
             }
         };
-        
+
         ext.r_counter = function(name) {
-            /*if(is_creator) {
+            /*if(typeof is_creator !== "undefined" && is_creator) {
                 console.log("Counter '" + name + "' was reseted.");
             }*/
             delete counters[name];
         };
-        
+
         ext.r_all_counters = function() {
-            /*if(is_creator) {
+            /*if(typeof is_creator !== "undefined" && is_creator) {
                 console.log("All counters were reseted.");
             }*/
             counters = {Help: Tips};
         };
-        
+
         ext.s_cookie = function(name, val) {
             if(storage) {
                 if(storage.length <= 500) {
-                    /*if(is_creator) {
+                    /*if(typeof is_creator !== "undefined" && is_creator) {
                         console.log("Cookie '" + name + "' set to '" + val + "'.");
                     }*/
                     storage.setItem(name, val);
                 } else {
-                    if(is_creator) {
+                    if(typeof is_creator !== "undefined" && is_creator) {
                         console.log("Too many cookies.");
                     }
                 }
             }
         };
-        
+
         ext.i_cookie = function(name, val) {
             if(storage) {
                 if(storage.length <= 500) {
-                    /*if(is_creator) {
+                    /*if(typeof is_creator !== "undefined" && is_creator) {
                         console.log("Cookie '" + name + "' increased by '" + val + "'.");
                     }*/
                     if(typeof storage[name] != "undefined") {
@@ -1617,41 +1622,41 @@ TGB.installExtensionData = function () {
                         storage.setItem(name, val);
                     }
                 }
-                else if(is_creator) {
+                else if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Too many cookies.");
                 }
             }
         };
-        
+
         ext.d_cookie = function(name) {
             if(storage) {
-                /*if(is_creator) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Cookie '" + name + "' was deleted.");
                 }*/
                 storage.removeItem(name);
             }
         };
-        
+
         ext.d_all_cookies = function() {
             if(storage) {
-                /*if(is_creator) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("All cookies were deleted.");
                 }*/
                 storage.clear();
             }
         };
-                 
+
         ScratchExtensions.register('Data', descriptor, ext);
     })({});
 };
 
 waitfor(SWFready.isResolved, true, 100, function() {
     extensions = Object.getOwnPropertyNames(TGB).sort();
-    if(!is_creator) {
+    if(typeof is_creator !== "undefined" && !is_creator) {
         OWstr = $('.overview').html();
         extensionSpecified = OWstr.search(/\[\u262f((\w|\&| |,){1,})\]/) > -1;
     }
-    
+
     try {
         if(extensionSpecified) {
             chosenExtensions = OWstr.replace(/.(?!(\[?\u262f?((\w|\&| |,){1,})?\]))/g ,'');
@@ -1719,23 +1724,25 @@ waitfor(SWFready.isResolved, true, 100, function() {
             }
         });
     });
-    
+
     if(Scratch.FlashApp.model.attributes.isPublished === false) {
         JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
     }
-    
-    overviewHtml = ($('#info textarea').html() === null) ? $('.overview::lt(1)').html() : $('#info textarea').html();
-    searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
-    numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
-    
-    if(searchAddition !== false) {
-        if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
-            $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
-        } else {
-            $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 11), ''));
-        }
-        $('textarea[name=content]').focus( function(){
-            JSsetProjectBanner(commentAddition[numberAddition - 1]);
-        });
-    }
+
+	if(typeof is_creator !== "undefined") {
+		overviewHtml = ($('#info textarea').html() === null) ? $('.overview::lt(1)').html() : $('#info textarea').html();
+		searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
+		numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
+
+		if(searchAddition !== false) {
+			if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
+				$('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
+			} else {
+				$('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 11), ''));
+			}
+			$('textarea[name=content]').focus( function(){
+				JSsetProjectBanner(commentAddition[numberAddition - 1]);
+			});
+		}
+	}
 });
