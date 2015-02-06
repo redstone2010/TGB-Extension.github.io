@@ -56,7 +56,7 @@ waitfor(isScratchDefined, true, 100, function() {
 console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
 commentAddition = ["Please read the instructions before commenting! Thanks :)", "Please use the forum to post your scores!", "Feel free to make your requests here!", "Please use my profile to make requests! Thanks :)", "Thanks for commenting! :)"];
 
-//IFrame Shim with Pepperflash Detection//////////////////////////////////////////////////////
+//iFrame Shim with Pepperflash Detection//////////////////////////////////////////////////////
 //Pepperflash detection according to Igor Shastin's answer at http://stackoverflow.com/questions/12866060/detecting-pepper-ppapi-flash-with-javascript
 var isPPAPI = false,
     flashStr = 'application/x-shockwave-flash',
