@@ -739,7 +739,7 @@ TGB.installExtensionProgram = function () {
                 ['-'],
                 ['r', 'Tab Title', 'title'],
                 [' ', 'Set Tab Title to %s', 'set_tab', document.title],
-                ['b', 'Is this tab visible?', 'tab_active'],
+                ['b', 'Is this tab visible?', 'tab_visible'],
                 ['-'],
                 ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', default_profile],
                 //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
@@ -875,7 +875,7 @@ TGB.installExtensionProgram = function () {
                 document.title = str;
             };
 
-            ext.tab_active = function() {
+            ext.tab_visible = function() {
         	return document.visibilityState === "visible";
             };
 
