@@ -9,6 +9,7 @@
 // @grant 		 GM_addStyle
 // @grant  	     GM_getResourceText
 // @grant        unsafeWindow
+// @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
 // @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
@@ -22,6 +23,7 @@
 // ==/UserScript==
 //CSS ////////////////////////////////////////////////////////////////////////////////////////
 
+GM_addStyle(GM_getResourceText("TGBox"));
 GM_addStyle(GM_getResourceText("sweet-alert"));
 
 //Variables///////////////////////////////////////////////////////////////////////////////////
@@ -285,65 +287,6 @@ create_TGBox = function(title, description) {
     cb = (description.length > 45) ? description.substring(0,44) + "..." : description;
     cb = capitalizeFirstLetter(cb);
     $("body").append('<div id="TGBox"><div id="TGB_bg2"></div><div id="TGB_bg"></div><img id="profile_pic" src="' + src + '"/><b><p id="TitleGB">' + ca + '</p></b><p id="TextGB">' + cb + '</p></div>');
-    $("#TGBox").css(
-    {
-        "height":"75px",
-        "width":"200px",
-        "position":"fixed",
-        "background-color":"#0f8bc0",
-        "bottom":"55px",
-        "left":"-247px",
-        "opacity":"0",
-        "z-index":"11",
-    });
-    $("#profile_pic").css(
-    {
-        "position":"absolute",
-        "top":"13px",
-        "border-radius":"100%",
-        "right":"-25px"
-    });
-    $("#TGB_bg").css(
-    {
-        "position":"absolute",
-        "width":"75px",
-        "height":"100%",
-        "border-radius":"100%",
-        "background-color":"#049ad6",
-        "right":"-37px"
-    });
-    $("#TGB_bg2").css(
-    {
-        "position":"absolute",
-        "width":"75px",
-        "height":"100%",
-        "border-radius":"100%",
-        "background-color":"rgb(59, 167, 213)",
-        "right":"-44px"
-    });
-    $("#TitleGB").css(
-    {
-        "color":"#fff",
-        "position":"absolute",
-        "right":"17px",
-        "top":"15px",
-        "text-shadow":"0 1px rgba(0,0,0,0.4)",
-        "font-size":"12px",
-        "text-align":"center",
-        "width":"100%",
-    });
-    $("#TextGB").css(
-    {
-        "color":"#fff",
-        "margin-left":"25px",
-        "margin-top":"35px",
-        "text-align":"center",
-        "text-shadow":"0 1px rgba(0,0,0,0.4)",
-        "font-size":"11px",
-        "max-width":"120px",
-        "line-height":"1",
-        "word-wrap": "break-word",
-    });
 };
 
 TGBox_out = function() {
