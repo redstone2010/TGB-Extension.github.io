@@ -26,6 +26,61 @@
 GM_addStyle(GM_getResourceText("TGBox"));
 GM_addStyle(GM_getResourceText("sweet-alert"));
 
+//Extension Loader////////////////////////////////////////////////////////////////////////////
+function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _status /* Number */, _msg /* String */) {
+    this.descriptor = _descriptor;
+
+    this.functions = _functions || {};
+    this.functions._getStatus = function() {
+        // Status reporting code
+        // Use this to report missing hardware, plugin or unsupported browser
+        return {
+            status: _status || 2,
+            msg: _msg || "Installed"
+        };
+    };
+
+    this.install = function() {
+        ScratchExtensions.register(name, _descriptor, this.functions);
+    }
+}
+
+Extension.prototype.functions = function _shutdown() {};
+
+//Welcome easter egg!/////////////////////////////////////////////////////////////////////////
+
+console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
+
+//Wait for a condition to be true/////////////////////////////////////////////////////////////
+
+function waitfor(test, expectedValue, msec, callback) {
+    while (test() !== expectedValue) {
+        setTimeout(function() {
+            waitfor(test, expectedValue, msec, callback);
+        }, msec);
+        return;
+    }
+    callback();
+}
+
+//Check if Scratch's Variables are defined////////////////////////////////////////////////////
+
+function isDataDefined() {
+    try {
+        return data !== undefined;
+    } catch(e) {
+        return false;
+    }
+}
+
+function isScratchDefined() {
+    try {
+        return Scratch !== undefined;
+    } catch(e) {
+        return false;
+    }
+}
+
 //Variables///////////////////////////////////////////////////////////////////////////////////
 var TGB = {},
     wait = 2.5;
@@ -64,7 +119,12 @@ commentAddition = [
     "Thanks for commenting! :)"
 ];
 
-console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
+//Checking if user is a New Scratcher/////////////////////////////////////////////////////////
+
+$.get( "http://scratch.mit.edu/internalapi/swf-settings/", function(data) {
+    scratcher = JSON.parse(data);
+    scratcher = scratcher.user_groups.indexOf('Scratchers') > -1;
+});
 
 //iFrame Shim with Pepperflash Detection//////////////////////////////////////////////////////
 //Pepperflash detection according to Igor Shastin's answer at http://stackoverflow.com/questions/12866060/detecting-pepper-ppapi-flash-with-javascript
@@ -76,46 +136,24 @@ if(mimeTypes && mimeTypes[flashStr] && mimeTypes[flashStr].enabledPlugin &&
   (mimeTypes[flashStr].enabledPlugin.filename.match(/pepflashplayer|Pepper/gi))) isPPAPI = true;
 
 if(!isPPAPI) {
-    $('param:eq(2)').attr('value', 'window');
+    $('param:eq(2)').attr('value', 'transparent');
     $('.sweet-alert').append('<iframe class="iframeshim" frameBorder="0" scrolling="no" style="width:100%; height:100%; opacity: 0; z-index: 0; left: 50%; margin-left:-256px; pointer-events:none;"></iframe>');
 }
 
-//Check if the data object is defined to avoid loading errors/////////////////////////////////
+//Local Storage Check///////////////////////////////////////////////////////////////////////
+//By Mathias Bynens
 
-function isDataDefined() {
-    try {
-        return data !== undefined;
-    } catch(e) {
-        return false;
-    }
-}
+try {
+    var fail,
+        uid;
 
-function isScratchDefined() {
-    try {
-        return Scratch !== undefined;
-    } catch(e) {
-        return false;
-    }
-}
-
-//Wait for a condition to be true/////////////////////////////////////////////////////////////
-
-function waitfor(test, expectedValue, msec, callback) {
-    while (test() !== expectedValue) {
-        setTimeout(function() {
-            waitfor(test, expectedValue, msec, callback);
-        }, msec);
-        return;
-    }
-    callback();
-}
-
-//Checking if user is a New Scratcher/////////////////////////////////////////////////////////
-
-$.get( "http://scratch.mit.edu/internalapi/swf-settings/", function(data) {
-    scratcher = JSON.parse(data);
-    scratcher = scratcher.user_groups.indexOf('Scratchers') > -1;
-});
+    uid = new Date;
+    (storage = window.localStorage).setItem(uid, uid);
+    fail = storage.getItem(uid) != uid;
+    storage.removeItem(uid);
+    fail && (storage = false);
+    storage['!Cookie'] = 1; //Just a little Easter Egg, there's no need to set it to 1 again after resetting :p
+} catch (exception) {}
 
 //Key Checks//////////////////////////////////////////////////////////////////////////////////
 
@@ -148,47 +186,12 @@ function menuCheck(key) {
   }
 }
 
-//Youtube/////////////////////////////////////////////////////////////////////////////////////
-//Block is not working, so I'll leave this disabled for now.
-/*window.YT_style = function(x, y){
-    if(isNaN(x)) {
-        x = 0;
-    }
-    if(isNaN) {
-        y = 0;
-    }
-    $("#YTplayer").css(
-    {
-        'position': 'absolute',
-        'bottom': 14 + y + 'px',
-        'left': 15 + x + 'px'
-    });
-};
-// Autoplay video
-function onPlayerReady(event) {
-    event.target.playVideo();
+//Signed Decimal Fix//Thanks for explaining it to me, DadOfMrLog!///////////////////////////
+//Based on: http://stackoverflow.com/questions/6146177/convert-a-signed-decimal-to-hex-encoded-with-twos-complement
+
+function dec_fix(num) {
+    return parseInt(Number('0x' + (num < 0 ? (0xFFFFFFFF + num + 1).toString(16).slice(2) : num.toString(16))), 10);
 }
-// When video ends
-function onPlayerStateChange(event) {
-    if(event.data === 0) {
-        $("#YTplayer").remove();
-    }
-}*/
-
-//Local Storage Check///////////////////////////////////////////////////////////////////////
-//By Mathias Bynens
-
-try {
-    var fail,
-        uid;
-
-    uid = new Date;
-    (storage = window.localStorage).setItem(uid, uid);
-    fail = storage.getItem(uid) != uid;
-    storage.removeItem(uid);
-    fail && (storage = false);
-    storage['!Cookie'] = 1; //Just a little Easter Egg, there's no need to set it to 1 again after resetting :p
-} catch (exception) {}
 
 //Esrever/////////////////////////////////////////////////////////////////////////////////////
 //By Mathias Bynens
@@ -216,27 +219,20 @@ var reverse = function(string) {
     return result;
 };
 
-//Signed Decimal Fix//Thanks for explaining it to me, DadOfMrLog!///////////////////////////
-//Based on: http://stackoverflow.com/questions/6146177/convert-a-signed-decimal-to-hex-encoded-with-twos-complement
-
-function dec_fix(num) {
-    return parseInt(Number('0x' + (num < 0 ? (0xFFFFFFFF + num + 1).toString(16).slice(2) : num.toString(16))), 10);
-}
-
 //String Manipulation Functions///////////////////////////////////////////////////////////////
 
-capitalizeFirstLetter = function (string) {
+function capitalizeFirstLetter(string) {
     var n = string.search(/\w/);
     var a = string.charAt(n).toUpperCase();
     var b = string.slice(n + 1);
     return (n > 0) ? string.substr(0, n) + a + b: a + b;
 };
 
-contains = function (a, str){
+function contains(a, str){
     return a.indexOf(str) > -1;
 };
 
-startsWith = function (a, str){
+function startsWith(a, str){
     return a.slice(0, str.length) == str;
 };
 
@@ -244,11 +240,11 @@ function endsWith(a, str) {
     return a.slice(-str.length) == str;
 }
 
-capitalize = function(str) {
+function capitalize(str) {
     return str.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
 };
 
-shuffle = function (str) {
+function shuffle(str) {
     var a = str.split(""),
         n = a.length;
 
@@ -260,34 +256,6 @@ shuffle = function (str) {
     }
     return a.join("");
 };
-
-//Net Checker/////////////////////////////////////////////////////////////////////////////////
-//Disabled until a Firefox compatible version is launched
-/*if(contains(navigator.userAgent, "Firefox")) {
-    function serverReachable() {
-        // Thanks to Louis-Rémi!
-        var x = new ( window.ActiveXObject || XMLHttpRequest )( "Microsoft.XMLHTTP" ),
-            s;
-        x.open(
-            // append a random string to the current hostname,
-            // to make sure we're not hitting the cache
-            "//" + window.location.hostname + "/?rand=" + Math.random(),
-            // make a synchronous request
-            false
-        );
-        try {
-            x.send();
-            s = x.status;
-            // Make sure the server is reachable
-            return ( s >= 200 && s < 300 || s === 304 );
-            // catch network & other problems
-        } catch (e) {
-            return false;
-        }
-
-        setInterval(function() {online = serverReachable();}, 3000);
-    }
-}*/
 
 //TGBox///////////////////////////////////////////////////////////////////////////////////////
 
@@ -321,6 +289,61 @@ TGBox_in_helper = function(a, b) {
         left:0,
     }, 1500);
 };
+
+//Youtube/////////////////////////////////////////////////////////////////////////////////////
+//Block is not working, so I'll leave this disabled for now.
+/*window.YT_style = function(x, y){
+    if(isNaN(x)) {
+        x = 0;
+    }
+    if(isNaN) {
+        y = 0;
+    }
+    $("#YTplayer").css(
+    {
+        'position': 'absolute',
+        'bottom': 14 + y + 'px',
+        'left': 15 + x + 'px'
+    });
+};
+// Autoplay video
+function onPlayerReady(event) {
+    event.target.playVideo();
+}
+// When video ends
+function onPlayerStateChange(event) {
+    if(event.data === 0) {
+        $("#YTplayer").remove();
+    }
+}*/
+
+//Net Checker/////////////////////////////////////////////////////////////////////////////////
+//Disabled until a Firefox compatible version is launched
+/*if(contains(navigator.userAgent, "Firefox")) {
+    function serverReachable() {
+        // Thanks to Louis-Rémi!
+        var x = new ( window.ActiveXObject || XMLHttpRequest )( "Microsoft.XMLHTTP" ),
+            s;
+        x.open(
+            // append a random string to the current hostname,
+            // to make sure we're not hitting the cache
+            "//" + window.location.hostname + "/?rand=" + Math.random(),
+            // make a synchronous request
+            false
+        );
+        try {
+            x.send();
+            s = x.status;
+            // Make sure the server is reachable
+            return ( s >= 200 && s < 300 || s === 304 );
+            // catch network & other problems
+        } catch (e) {
+            return false;
+        }
+
+        setInterval(function() {online = serverReachable();}, 3000);
+    }
+}*/
 
 //Reports the wait to user////////////////////////////////////////////////////////////////////
 
