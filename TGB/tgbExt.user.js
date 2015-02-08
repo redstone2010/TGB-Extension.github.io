@@ -27,10 +27,9 @@ GM_addStyle(GM_getResourceText("TGBox"));
 GM_addStyle(GM_getResourceText("sweet-alert"));
 
 //Extension Loader////////////////////////////////////////////////////////////////////////////
-function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _status /* Number */, _msg /* String */) {
-    this.descriptor = _descriptor;
-
+function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _msg /* String */, _status /* Number */) {
     this.functions = _functions || {};
+    this.functions._shutdown = function() {};
     this.functions._getStatus = function() {
         // Status reporting code
         // Use this to report missing hardware, plugin or unsupported browser
@@ -41,11 +40,16 @@ function Extension(name /* String */, _descriptor /* Object */, _functions /* Ob
     };
 
     this.install = function() {
+        //Execute a function when the extension is installed
+        try {
+            this.onInstall();
+        } catch (e) {}
+        //Install Extension
         ScratchExtensions.register(name, _descriptor, this.functions);
-    }
+    };
 }
 
-Extension.prototype.functions = function _shutdown() {};
+//Extension.prototype.functions = function _shutdown() {};
 
 //Welcome easter egg!/////////////////////////////////////////////////////////////////////////
 
@@ -90,9 +94,18 @@ var scratcher,
     //online; Activate for Firefox version
 
 var keysPressed = [],
-    keyDetection = false;
+    keyDetection = false,
+    last_h_value = false;
 
-var storage;
+var lang = "Google US English";
+
+var counters = {Help: Tips},
+    Tips = [
+        "You can use counters as local variables!",
+        "To open Project and Discussion pages you have to use their respective ID's.",
+        "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
+    ],
+    storage;
 
 waitfor(isDataDefined, true, 100, function() {
     is_creator = data.user.username == data.project.creator;
@@ -154,6 +167,19 @@ try {
     fail && (storage = false);
     storage['!Cookie'] = 1; //Just a little Easter Egg, there's no need to set it to 1 again after resetting :p
 } catch (exception) {}
+
+//List Voices/////////////////////////////////////////////////////////////////////////////////
+
+function _get_voices() {
+    var ret = [];
+    var voices = speechSynthesis.getVoices();
+
+    for(var i = 0; i < voices.length; i++ ) {
+         ret.push(voices[i].name);
+    }
+
+    return ret;
+}
 
 //Key Checks//////////////////////////////////////////////////////////////////////////////////
 
@@ -226,15 +252,15 @@ function capitalizeFirstLetter(string) {
     var a = string.charAt(n).toUpperCase();
     var b = string.slice(n + 1);
     return (n > 0) ? string.substr(0, n) + a + b: a + b;
-};
+}
 
 function contains(a, str){
     return a.indexOf(str) > -1;
-};
+}
 
 function startsWith(a, str){
     return a.slice(0, str.length) == str;
-};
+}
 
 function endsWith(a, str) {
     return a.slice(-str.length) == str;
@@ -242,7 +268,7 @@ function endsWith(a, str) {
 
 function capitalize(str) {
     return str.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
-};
+}
 
 function shuffle(str) {
     var a = str.split(""),
@@ -255,7 +281,11 @@ function shuffle(str) {
         a[j] = tmp;
     }
     return a.join("");
-};
+}
+
+function zeroPad(num) {
+    return "00000000".slice(String(num).length) + num;
+}
 
 //TGBox///////////////////////////////////////////////////////////////////////////////////////
 
@@ -352,60 +382,311 @@ console.log('Waiting ' + wait + ' secs...');
 //Extensions//////////////////////////////////////////////////////////////////////////////////
 //TODO: Include pages to explain each Extension.
 
-TGB.installExtensionOperators = function () {
-    (function(ext) {
+TGB = {
+    Color: new Extension(
+    "Color",
+    {
+        blocks: [
+            ['r', '%c', 'color', math.pickRandom([255, 65280, 16711680])],
+            ['-'],
+            //['r', 'mix %c and %c', 'mix'],
+            ['r', 'Hex%s to color', 'hex2color', '#ffffff'],
+            ['r', 'R:%s G:%s B:%s', 'rgb2color', 255, 255, 255],
+            ['-'],
+            ['r', '%m.rgb of %c', 'color2rgb', 'Red'],
+        ],
 
-        ext._shutdown = function() {};
+        menus: {
+            rgb: ["Red", "Green", "Blue"],
+        },
+    },
+    {
+        color: function(integer) {return integer;},
 
-        // Status reporting code
-        // Use this to report missing hardware, plugin or unsupported browser
-        ext._getStatus = function() {return {status: 2, msg: 'Installed'};};
-
-        // Block and block menu descriptions
-        var descriptor = {
-            blocks: [
-                ['r', '%n ^ %n', 'power', '', ''],
-                ['r', '%n \u221a%n', 'nth_root', '', ''],
-                ['-'],
-                ['r', 'atan2 of x:%n y:%n', 'atan2', 1, 1],
-                ['r', 'evaluate %s', 'evaluate', '5.08 cm to inch'],
-                ['-'],
-                ['b', '%s %m.compare %s', 'compare', 1, '\u2260', 1],
-                ['b', 'Case sense %s = %s', 'equals_to', 'A', 'a'],
-                ['b', '%b xor %b', 'xor'],
-                ['-'],
-                ['b', 'true', 'b_true'],
-                ['b', 'false', ''],
-                ['b', '%n % chance of true', 'random_bool', 50],
-                ['b', '%s as a boolean', 'as_bool', Math.round(Math.random())],
-                ['b', 'is %s a %m.data_types ?', 'type_of', 10, 'number'],
-                ['r', 'if%b then %s else %s', 'reporter_if', '', 'hello', 'world'],
-                ['-'],
-                ['r', '%m.constants', 'constants', 'Pi'],
-                ['r', 'round %n to %n decimal places', 'round_places', 1.23, 1],
-                ['-'],
-                ['r', '%n within %n and %n', 'within', 11, 1, 10],
-                ['-'],
-                ['r', '%n %m.radgrees to %m.radgrees', 'radgrees', 180, 'Degrees', 'Radians'],
-                ['r', '%n %m.degrees to %m.degrees', 'degrees', 0, 'K', '°C']
-            ],
-
-            menus: {
-                compare: ["\u2264", "\u2265", "\u2260"],
-                constants: ["Pi", "Phi"],
-                data_types: ["number", "string", "boolean"],
-                radgrees: ["Degrees", "Radians"],
-                degrees: ["°C", "°F", "K"],
+        hex2color: function(s) {
+            if(s.charAt(0) != '#') {
+                s = '#' + s;
             }
-        };
+            if(/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(s)) {
+                var patt = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})$/;
+                var matches = patt.exec(s);
+                return 65536*parseInt(matches[1], 16) + 256*parseInt(matches[2], 16) + parseInt(matches[3], 16);
+            } else {
+                console.log('Invalid hex color:' + s);
+            }
+        },
 
-        // Blocks
+        //256^2*r + 256*g + b = RGB Integer
+        rgb2color: function(r, g ,b) {
+            r = Number(r);
+            g = Number(g);
+            b = Number(b);
+            if(r < 256 && g < 256 && b < 256) {
+                return 65536*r + 256*g + b;
+            } else {
+                console.log('Invalid rgb color: rgb(' + r + ', ' + g + ', ' + b + ').');
+            }
+        },
 
-        ext.power = function(base, exponent) {
+        color2rgb: function(rgb,  integer) {
+            integer = dec_fix(integer);
+            switch(rgb) {
+                case "Blue":
+                    return integer % 256;
+                case "Green":
+                    return Math.floor(integer / 256) % 256;
+                case "Red":
+                    return Math.floor(integer / 65536);
+
+            }
+        }
+
+        /*mix: function(color1, color2) {
+            //color_1 = $.Color(color2hex(color1));
+            //color_2 = $.Color(color2hex(color2));
+            //return hex2color(Color_mixer.mix(color_1, color_2));
+            return;
+        },*/
+    }),
+    Data: new Extension(
+    "Data",
+    {
+        blocks: [
+            ['r', 'Counter %s', 'counter', 'Help'],
+            ['r', 'Cookie %s', 'cookie', '!Cookie'],
+            ['-'],
+            [' ', 'Set counter %s to %s', 's_counter', 'Score', 10],
+            [' ', 'Increase counter %s by %s', 'i_counter', 'Score', 1],
+            [' ', 'Reset counter %s', 'r_counter', 'Score'],
+            [' ', 'Reset all counters', 'r_all_counters'],
+            ['-'],
+            [' ', 'Set cookie %s to %s', 's_cookie', 'Level', 1],
+            [' ', 'Increase cookie %s by %s', 'i_cookie', 'Level', 1],
+            [' ', 'Delete cookie %s', 'd_cookie', 'Level'],
+            [' ', 'Delete all cookies', 'd_all_cookies']
+        ]
+    },
+    {
+        counter: function(name) {
+            if(name != 'Help' || counters.Help != Tips) {
+                return counters[name];
+            } else {
+                return math.pickRandom(counters.Help);
+            }
+        },
+
+        cookie: function(name) {
+            if (storage) {
+                return storage[name];
+            }
+        },
+
+        s_counter: function(name, val) {
+            if(Object.keys(counters).length <= 50001) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
+                    console.log("Counter '" + name + "' set to '" + val + "'.");
+                }*/
+                counters[name] = val;
+            } else {
+                if(typeof is_creator !== "undefined" && is_creator) {
+                    console.log("Too many counters.");
+                }
+            }
+        },
+
+        i_counter: function(name, val) {
+            if(Object.keys(counters).length <= 50001) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
+                    console.log("Counter '" + name + "' increased by '" + val + "'.");
+                }*/
+                if(typeof counters[name] != "undefined") {
+                    counters[name] += val;
+                } else {
+                    counters[name] = val;
+                }
+            }
+            else if(typeof is_creator !== "undefined" && is_creator) {
+                console.log("Too many counters.");
+            }
+        },
+
+        r_counter: function(name) {
+            /*if(typeof is_creator !== "undefined" && is_creator) {
+                console.log("Counter '" + name + "' was reseted.");
+            }*/
+            delete counters[name];
+        },
+
+        r_all_counters: function() {
+            /*if(typeof is_creator !== "undefined" && is_creator) {
+                console.log("All counters were reseted.");
+            }*/
+            counters = {Help: Tips};
+        },
+
+        s_cookie: function(name, val) {
+            if(storage) {
+                if(storage.length <= 500) {
+                    /*if(typeof is_creator !== "undefined" && is_creator) {
+                        console.log("Cookie '" + name + "' set to '" + val + "'.");
+                    }*/
+                    storage.setItem(name, val);
+                } else {
+                    if(typeof is_creator !== "undefined" && is_creator) {
+                        console.log("Too many cookies.");
+                    }
+                }
+            }
+        },
+
+        i_cookie: function(name, val) {
+            if(storage) {
+                if(storage.length <= 500) {
+                    /*if(typeof is_creator !== "undefined" && is_creator) {
+                        console.log("Cookie '" + name + "' increased by '" + val + "'.");
+                    }*/
+                    if(typeof storage[name] != "undefined") {
+                        if(isNaN(val) || isNaN(storage[name])) {
+                            storage[name] += val;
+                        } else {
+                            storage[name] = Number(storage[name]) + Number(val);
+                        }
+                    } else {
+                        storage.setItem(name, val);
+                    }
+                }
+                else if(typeof is_creator !== "undefined" && is_creator) {
+                    console.log("Too many cookies.");
+                }
+            }
+        },
+
+        d_cookie: function(name) {
+            if(storage) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
+                    console.log("Cookie '" + name + "' was deleted.");
+                }*/
+                storage.removeItem(name);
+            }
+        },
+
+        d_all_cookies: function() {
+            if(storage) {
+                /*if(typeof is_creator !== "undefined" && is_creator) {
+                    console.log("All cookies were deleted.");
+                }*/
+                storage.clear();
+            }
+        }
+    }),
+
+    "Date": new Extension(
+    "Date",
+    {
+        blocks: [
+            ['r', 'UTC %m.types', 'UTC', 'Hours'],
+            ['r', 'User GMT Timezone Offset', 'timezone'],
+        ],
+
+        menus: {
+            types: ["Hours", "Minutes", "Seconds", "Day of the Week", "Date", "Month", "Year"],
+        }
+    },
+    {
+        UTC: function(type) {
+        var d = new Date;
+        switch(type) {
+            case "Milliseconds":
+                return d.getUTCMilliseconds();
+            case "Seconds":
+                return d.getUTCSeconds();
+            case "Minutes":
+                return d.getUTCMinutes();
+            case "Hours":
+                return d.getUTCHours();
+            case "Date":
+                return d.getUTCDate();
+            case "Month":
+                return d.getUTCMonth();
+            case "Year":
+                return d.getUTCFullYear();
+            case "Day of the Week":
+                switch (d.getDay()) {
+                    case 0:
+                        day = "Sunday";
+                        break;
+                    case 1:
+                        day = "Monday";
+                        break;
+                    case 2:
+                        day = "Tuesday";
+                        break;
+                    case 3:
+                        day = "Wednesday";
+                        break;
+                    case 4:
+                        day = "Thursday";
+                        break;
+                    case 5:
+                        day = "Friday";
+                        break;
+                    case 6:
+                        day = "Saturday";
+                        break;
+                }
+                return day;
+            }
+                },
+        timezone: function() {
+            var d = new Date();
+            return d.getTimezoneOffset();
+        }
+    }),
+
+    Operators: new Extension(
+    "Operators",
+    {
+        blocks: [
+            ['r', '%n ^ %n', 'power', '', ''],
+            ['r', '%n \u221a%n', 'nth_root', '', ''],
+            ['-'],
+            ['r', 'atan2 of x:%n y:%n', 'atan2', 1, 1],
+            ['r', 'evaluate %s', 'evaluate', '5.08 cm to inch'],
+            ['-'],
+            ['b', '%s %m.compare %s', 'compare', 1, '\u2260', 1],
+            ['b', 'Case sense %s = %s', 'equals_to', 'A', 'a'],
+            ['b', '%b xor %b', 'xor'],
+            ['-'],
+            ['b', 'true', 'b_true'],
+            ['b', 'false', ''],
+            ['b', '%n % chance of true', 'random_bool', 50],
+            ['b', '%s as a boolean', 'as_bool', Math.round(Math.random())],
+            ['b', 'is %s a %m.data_types ?', 'type_of', 10, 'number'],
+            ['r', 'if%b then %s else %s', 'reporter_if', '', 'hello', 'world'],
+            ['-'],
+            ['r', '%m.constants', 'constants', 'Pi'],
+            ['r', 'round %n to %n decimal places', 'round_places', 1.23, 1],
+            ['-'],
+            ['r', '%n within %n and %n', 'within', 11, 1, 10],
+            ['-'],
+            ['r', '%n %m.radgrees to %m.radgrees', 'radgrees', 180, 'Degrees', 'Radians'],
+            ['r', '%n %m.degrees to %m.degrees', 'degrees', 0, 'K', '°C']
+        ],
+
+        menus: {
+            compare: ["\u2264", "\u2265", "\u2260"],
+            constants: ["Pi", "Phi"],
+            data_types: ["number", "string", "boolean"],
+            radgrees: ["Degrees", "Radians"],
+            degrees: ["°C", "°F", "K"],
+        }
+    },
+    {
+        power: function(base, exponent) {
             return Math.pow(base, exponent);
-        };
+        },
 
-        ext.nth_root = function(n, x) {
+        nth_root: function(n, x) {
             if(!(isNaN(n) || isNaN(x))) {
                 if(n === Infinity || x === Infinity) {
                     return Infinity;
@@ -426,17 +707,17 @@ TGB.installExtensionOperators = function () {
             } else {
                 return NaN;
             }
-        };
+        },
 
-        ext.evaluate = function(s) {
+        evaluate: function(s) {
           return math.format(math.eval(s), 16);
-        };
+        },
 
-        ext.atan2 = function(x, y) {
+        atan2: function(x, y) {
           return Math.atan2(x, y) * 180 / Math.PI;
-        };
+        },
 
-        ext.compare = function(a, type, b) {
+        compare: function(a, type, b) {
 
           switch(type) {
             case "\u2260":
@@ -446,9 +727,9 @@ TGB.installExtensionOperators = function () {
             case "\u2265":
               return a >= b;
           }
-        };
+        },
 
-        ext.equals_to = function(a, b) {
+        equals_to: function(a, b) {
             var c = Number(a);
             var d = Number(b);
             if (isNaN(c) || isNaN(d)) {
@@ -456,25 +737,25 @@ TGB.installExtensionOperators = function () {
             } else {
                 return (c === d) ? true : false;
             }
-        };
+        },
 
-        ext.xor = function(a,b){
+        xor: function(a,b){
           return Boolean(a ^ b);
-        };
+        },
 
-        ext.b_true = function() {
+        b_true: function() {
           return true;
-        };
+        },
 
-        ext.as_bool = function(b) {
+        as_bool: function(b) {
             return isNaN(b) ? !!b : !!Number(b);
-        };
+        },
 
-        ext.random_bool = function(n) {
+        random_bool: function(n) {
             return math.random(0, 100) < n;
-        };
+        },
 
-        ext.type_of = function(a, b) {
+        type_of: function(a, b) {
             switch(b) {
                 case "number":
                     if(!isNaN(a)) {
@@ -489,23 +770,23 @@ TGB.installExtensionOperators = function () {
                 case "boolean":
                     return (typeof(a) == "boolean") ? true : false;
             }
-        };
+        },
 
-        ext.reporter_if = function(b, opt1, opt2) {
+        reporter_if: function(b, opt1, opt2) {
             return b ? opt1 : opt2;
-        };
+        },
 
-        ext.constants = function(p) {
+        constants: function(p) {
             return (p=="Pi") ? Math.PI : (1 + Math.sqrt(5))/2;
-        };
+        },
 
-        ext.round_places = function(n, places) {
+        round_places: function(n, places) {
           places = Math.round(places);
           n = Number(n);
             return math.round(n, places);
-        };
+        },
 
-        ext.within = function(n, a, b) {
+        within: function(n, a, b) {
           if(isNaN(n) || isNaN(a) || isNaN(b)) {
             return "NaN";
           } else {
@@ -523,17 +804,17 @@ TGB.installExtensionOperators = function () {
               return n;
             }
           }
-        };
+        },
 
-        ext.radgrees = function(n, type1, type2) {
+        radgrees: function(n, type1, type2) {
           if(type1 == "Degrees") {
             return (type2 == "Radians") ? n * Math.PI / 180 : n;
           } else {
             return (type2 == "Degrees") ? n * 180 / Math.PI : n;
           }
-        };
+        },
 
-        ext.degrees = function(n, degrees_from, degrees_to) {
+        degrees: function(n, degrees_from, degrees_to) {
           //C / 5 = (F - 32) / 9 = (K - 273.15) / 5
           switch(degrees_from) {
             case "K":
@@ -567,39 +848,540 @@ TGB.installExtensionOperators = function () {
               }
               break;
           }
-        };
-        // Name of Scratch Extension goes here
-    ScratchExtensions.register('Operators', descriptor, ext);
-    })({});
-};
+        }
+    }),
 
-TGB.installExtensionUI = function () {
-    (function(ext) {
-        ext._shutdown = function() {};
+    "Program & Web": new Extension(
+    "Program & Web",
+    {
+        blocks: [
+            ['r', 'Project Title', 'proj_title'],
+            ['r', 'Project ID', 'proj_id'],
+            ['r', 'Instructions', 'info'],
+            ['r', 'Notes and Credits', 'notes'],
+            //['r', 'Days since last update', 'lst_upd', ''],
+            ['-'],
+            ['b', 'Shared?', 'shared'],
+            ['b', 'Remix?', 'remixed'],
+            ['-'],
+            ['r', 'Amount of Sprites', 'sprites'],
+            ['r', 'Amount of Scripts', 'scripts'],
+            ['r', 'Amount of Comments', 'comments', ''],
+            ['-'],
+            ['r', 'View Mode', 'mode'],
+            [' ', 'Switch to %m.views mode', 'switch_to', 'Player'],
+            [' ', 'Fullscreen Switch', 'fullscreen'],
+            ['-'],
+            ['w', 'Set clipboard to %s', 's_clip', 'Support!'],
+            //['r', 'Clipboard Data', 'r_clip'], Possibly impossible feature, make a pull request if you have any idea on how to do it!
+            ['-'],
+            ['r', 'Tab Title', 'title'],
+            [' ', 'Set Tab Title to %s', 'set_tab', document.title],
+            ['b', 'Is this tab visible?', 'tab_visible'],
+            ['-'],
+            ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder"],
+            //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
+            ['-'],
+            ['h', 'when %b is true', 'whentrue'],
+            [' ', '%s', '', 'Comment'],
+            ['l', '%s', '', 'Comment'],
+            [' ', 'Log %s', 'log', 'to the console.']
+        ],
 
-        ext._getStatus = function() {
-            return {status: 1, msg: 'Prompt and Confirm shouldn\'t be used inside other UI blocks and Clipboard blocks. A workaround for this is to use variables(or counters) to store their values.'};
-        };
-
-        var descriptor = {
-            blocks: [
-                ['w', 'TGBox Title:%s Description:%s', 'TGBox_in', 'Coolness +1!', 'Installed TGB\'s extensions!'],
-                ['-'],
-                ['w', 'Alert Title:%s Description:%s %m.alerts', 'SweetAlert', 'Congratulations!', 'You leveled up your programming skills!', 'success'],
-                //['R', 'Prompt ᴛɪᴛʟᴇ:%s ᴅᴇsᴄʀɪᴘᴛɪᴏɴ:%s ᴘʟᴀᴄᴇʜᴏʟᴅᴇʀ:%s ᴅᴇғᴀᴜʟᴛ:%s', 'SweetPrompt', 'Hi!', 'How are you?', 'Write your mood here!', 'I\'m feeling AWESOME!'], Disabled for now. Prompt version of SweetAlert needs a redo.
-                ['R', 'Confirm Title:%s Description:%s Yes:%s No:%s %m.confirm', 'SweetConfirm', 'Attention!', 'Do you really want to do this?', 'Yes', 'No', 'warning'],
-                ['-'],
-                [' ', 'Alert %s', 'alert', 'Imagine, Create, Share!'],
-                ['r', 'Prompt %s', 'prompt', 'How are you?'],
-                ['b', 'Confirm %s', 'confirm', 'Are you sure?']
-            ],
-            menus: {
-                alerts: ['', 'success', 'error', 'warning', 'info'],
-                confirm: ['warning', 'info', '']
+        menus: {
+            open: ["user profile of", "Project", "Discussion"],
+            views: ["Fullscreen", "Player", "Editor"],
+        },
+    },
+    {
+        proj_title: function() {
+            if(typeof is_creator !== "undefined") {
+                return (is_creator) ? document.getElementsByName("title")[0].value : document.getElementById("title").innerHTML;
+            } else {
+                return false;
             }
-        };
+        },
 
-        ext.TGBox_in = function(title, description, callback) {
+        proj_id: function() {
+            return project_id;
+        },
+
+        info: function() {
+            return Scratch.INIT_DATA.PROJECT.model.credits;
+        },
+
+        notes: function() {
+            return notes;
+        },
+
+        /*lst_upd: function() {
+
+        },*/
+
+        shared: function() {
+            return shared;
+        },
+
+        remixed: function() {
+            return remixed;
+        },
+
+        sprites: function() {
+            return $("#sprite-count").html();
+        },
+
+        scripts: function() {
+            return $("#script-count").html();
+        },
+
+        comments: function() {
+            n = $("h4:contains('Comments')").html();
+            return n.substring(n.lastIndexOf("(")+1,n.lastIndexOf(")"));
+        },
+
+        mode: function() {
+            var a = document.URL;
+            var b = a.substr((a.length - 7), (a.length - 1));
+            switch(b) {
+                case "lscreen":
+                    return "Fullscreen";
+                case "#editor":
+                    return "Editor";
+                default:
+                    return "Player";
+            }
+        },
+
+        switch_to: function(mode) {
+            var url = document.URL;
+            var hash = window.location.hash.toLowerCase();
+            mode = mode.toLowerCase();
+
+            if(mode == "fullscreen" || mode == "player" || mode == "editor") {
+                if(hash !== "") {
+                    window.location = url.replace(hash, '#' + mode);
+                } else {
+                    window.location = url + '#' + mode;
+                }
+            }
+        },
+
+        fullscreen: function() {
+            var url = document.URL;
+            var hash = window.location.hash.toLowerCase();
+
+            if(hash == "#player") {
+                window.location = url.replace(hash, '#fullscreen');
+            }
+            else if(hash == "#fullscreen") {
+                window.location = url.replace(hash, "#player");
+            }
+            else if (hash !== "#editor"){
+                window.location = url + "#fullscreen";
+            }
+        },
+
+        s_clip: function(str, callback) {
+            swal({
+                  title: "Clipboard",
+                  text: "Do you want to copy '" + str + "' to your clipboard?",
+                  type: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#DD6B55",
+                  confirmButtonText: "Yes, copy it!"
+            }, function(isConfirm){
+                if (isConfirm) {
+                    GM_setClipboard(str);
+                    callback();
+                } else {
+                    callback();
+                }
+            });
+        },
+
+        // I couldn't find a solution to read the clipboard without a paste event in Chrome, so I'll leave it disabled.
+        /*r_clip: function() {
+            console.log(unsafeWindow.clipboardData.getData("Text"));
+            return unsafeWindow.clipboardData.getData("Text");
+        },*/
+
+        title: function() {
+            return document.title;
+        },
+
+        set_tab: function(str) {
+            document.title = str;
+        },
+
+        tab_visible: function() {
+        return document.visibilityState === "visible";
+        },
+
+        TGB_open: function(type, src, callback) {
+            switch(type) {
+                case "user profile of":
+                    var new_type = "users";
+                    break;
+                case "Project":
+                    if(isNaN(src)) {
+                        callback();
+                        return;
+                    }
+                    new_type = "projects";
+                    break;
+                case "Discussion":
+                    if(isNaN(src)) {
+                        callback();
+                        return;
+                    }
+                    new_type = "discuss/topic";
+                    break;
+            }
+            swal({
+                  title: "Open" + (type == 'user profile of') ? 'User Profile' : type,
+                  text: "Do you want to open '" + src + "' in a new tab?",
+                  type: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#DD6B55",
+                  confirmButtonText: "Yes, open it!"
+            }, function(isConfirm){
+                if (isConfirm) {
+                    window.open('http://scratch.mit.edu/' + new_type + '/' + src);
+                    callback();
+                } else {
+                    callback();
+                }
+            });
+        },
+
+        log: function(msg) {
+            console.log(msg);
+        },
+
+        /*YTplayer;
+        youtube: function(videoID, x, y) {
+            $("#YTplayer").remove();
+            $(".stage").append('<div id="YTplayer"></div>');
+            YT_style(x, y);
+            YTplayer = new YT.Player('YTplayer', {
+                height: '360',
+                width: '480',
+                videoId: videoID,
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        },*/
+
+      when_true: function(bool) {return bool;}
+    }),
+
+    Sensing: new Extension(
+    "Sensing",
+    {
+        blocks: [
+            ['h', 'when key %m.keys is pressed', 'h_check_key', 'shift'],
+            ['-'],
+            ['b', '%m.keys key pressed?', 'check_key', 'shift'],
+            ['b', '%n key pressed?', 'check_key', 17],
+            ['-'],
+            ['r', 'Which key is pressed?', 'which_key']
+        ],
+
+        menus: {
+            keys: ['shift', 'ctrl', 'enter', 'backspace', 'alt', 'tab', 'caps', 'esc', 'any'],
+        }
+    },
+    {
+        h_check_key: function(key) {
+            if(document.activeElement === $('object#scratch')[0]) { //Check if Flash is focused. (Security Measure)
+                if(!last_h_value && menuCheck(key) === true) {
+                    last_h_value = true;
+                    return true;
+                } else {
+                    last_h_value = false;
+                    return false;
+                }
+            } //else isn't necessary here!
+        },
+
+        check_key: function(key_code) {
+            if(document.activeElement === $('object#scratch')[0]) {
+                if (isNaN(Number((key_code)))) {
+                    return menuCheck(key_code);
+                } else {
+                    return isKeyPressed(key_code);
+                }
+            } else {
+                return false;
+            }
+        },
+
+        which_key: function() {
+            if(document.activeElement === $('object#scratch')[0]) {
+                key = keysPressed.indexOf(true);
+                return key;
+            } else {
+                return -1;
+            }
+        }
+    }, "Pro Tip: Try to use these as less as you can, they can be very laggy!", 1),
+
+    Speech: new Extension(
+    "Speech",
+    {
+        blocks: [
+            ['r', 'Voice', 'voice_lang'],
+            ['-'],
+            [' ', 'Set voice to %m.voices', 'set_voice', 'Google US English'],
+            [' ', 'Set voice to %n', 'set_voice'],
+            ['-'],
+            [' ', 'Speak %s', 'speak_text', 'You are ' + ((typeof data !== "undefined") ? data.user.username : "a visitor")],
+            ['w', 'Speak %s and wait', 'speak_wait', 'You are a ' + (scratcher ? 'Scratcher' : 'New Scratcher')],
+            ['-'],
+            [' ', 'Pause speech', 'pause_voice'],
+            [' ', 'Resume speech', 'resume_voice'],
+            [' ', 'Cancel speech', 'cancel_voice'],
+            ['-'],
+            ['b', 'Speaking?', 'check_speech']
+        ],
+
+        menus: {
+            voices: _get_voices(),
+        }
+    },
+    {
+        //This script was started by Sayamindu, I finished and improved it!
+        voice_lang: function() {
+            return lang;
+        },
+
+        speak_text: function (text) {
+            var say = new SpeechSynthesisUtterance(text.toString()),
+                voices = window.speechSynthesis.getVoices();
+            say.voice = voices.filter(function(voice) { return voice.name == lang; })[0];
+            speechSynthesis.speak(say);
+        },
+
+        set_voice: function(gname) {
+            var g = parseInt(gname, 10),
+                voices = speechSynthesis.getVoices();
+            lang = (isNaN(g) === false) ? ((0 < g <= voices.length) ? voices[g - 1].name : console.log("Voice #" + g + " not found.")) : lang = gname;
+        },
+
+        pause_voice: function () {
+            speechSynthesis.pause();
+        },
+
+        resume_voice: function () {
+            speechSynthesis.resume();
+        },
+
+        cancel_voice: function () {
+            speechSynthesis.cancel();
+        },
+
+        check_speech: function() {
+            return speechSynthesis.speaking;
+        },
+
+        speak_wait: function (text, callback) {
+            this.speak_text(text);
+            waitfor(this.check_speech, false, 100, function() {
+                callback();
+            });
+        }
+    }),
+    Strings: new Extension(
+    "Strings",
+    {
+        blocks: [
+            ['r', 'Substring of %s starting at %n to %n', 'sub_string', 'Constructor', 1, 9],
+            ['-'],
+            ['b', '%s %m.str_checks %s', 'string_checks', 'Car Jack', 'contains', 'Jack'],
+            ['b', 'Is %s %m.uplow ?', 'up_low', 'STRING', 'uppercase'],
+            ['r', '%m.str_functions %s', 'string_functions', 'Capitalize', 'scratch'],
+            ['-'],
+            //['r', 'Place %n that %s is in %s', 'nth_occurence', '2', 'can', 'Can a can can a can?'], "ToDo" block.
+            ['r', 'Times %s is in %s', 'times_is_in', 'can', 'Can a can can a can?'],
+            ['r', '%s find %s starting at position %n', 'find_starting_at', 'Apple', 'p', 3],
+            ['-'],
+            ['r', 'Replace letters %n to %n of %s with %s', 'replace_substr', 1, 5, "Hello World", "Hi"],
+            ['r', 'Replace every %s with %s in %s', 'replace_every', 'u', 'a', 'cut'],
+            ['r', 'Repeat %s %n times separated by %s', 'repeat', 'Scratch', 2],
+            ['r', 'Pad %s with %s until it has length %n', 'pad', 1, 0, 2],
+            ['-'],
+            ['r', 'Word %n of %s', 'word', 2, 'Good Morning!'],
+            ['r', 'Words in %s', 'word_amount', 'Scratch Day'],
+            ['r', '# of word %s in %s', 'word_pos', 'year!', 'Happy new year!'],
+            ['-'],
+            ['r', 'Unicode of letter %n of %s', 'to_unicode', 1, 'Unicode'],
+            ['r', 'Unicode %s as letter', 'from_unicode', 49],
+            ['r', 'Binary of %s', 'toBinary', 'Scratch'],
+            ['r', 'ASCII of %s', 'toAscii', '01000001']
+        ],
+
+        menus: {
+            str_checks: ["contains", "starts with", "ends with"],
+            uplow: ["uppercase", "lowercase", "alphanumeric", "mixed Lower & Upper cases"],
+            str_functions: ["Capitalize", "Capitalize All Of", "Uppercase", "Lowercase", "Reverse", "Shuffle", "Trim blanks of"],
+        }
+    },
+    {
+        sub_string: function(a, b, c) {
+            a = String(a);
+            return a.substring((b - 1), c);
+        },
+
+        string_checks: function(str1, type, str2) {
+            switch(type) {
+                case "contains":
+                    return contains(str1, str2);
+                case "starts with":
+                    return startsWith(str1, str2);
+                case "ends with":
+                    return endsWith(str1, str2);
+            }
+        },
+
+        up_low: function(str, cases) {
+            str = String(str);
+            switch(cases) {
+                case "uppercase":
+                    return str === str.toUpperCase();
+                case "lowercase":
+                    return str === str.toLowerCase();
+                case "mixed Lower & Upper cases":
+                    return str !== str.toUpperCase() && str !== str.toLowerCase();
+                case "alphanumeric":
+                    return /^[\w\d]*$/.test(str);
+            }
+        },
+
+        string_functions: function(type, str) {
+           str = String(str);
+           switch(type) {
+               case "Capitalize":
+                   return capitalizeFirstLetter(str);
+               case "Capitalize All Of":
+                   return capitalize(str);
+               case "Uppercase":
+                   return str.toUpperCase();
+               case "Lowercase":
+                   return str.toLowerCase();
+               case "Reverse":
+                   return reverse(str);
+               case "Shuffle":
+                   return shuffle(str);
+               case "Trim blanks of":
+                   return str.trim();
+            }
+        },
+
+        times_is_in: function(a, b) {
+            return b.match(new RegExp(a, "g")).length;
+        },
+
+        find_starting_at: function (a, b, c) {
+            return a.indexOf(b, parseInt(c) - 1) + 1;
+        },
+
+        replace_substr: function(a, b, str, sub_string) {
+            return str.substr(0, a - 1) + sub_string + str.substr(b);
+        },
+
+        replace_every: function(a, b, str) {
+            return str.split(a).join(b);
+        },
+
+        repeat: function (str, times, sep) {
+            if(times > 0) {
+                times = Math.round(times);
+                var result = str;
+                for(i = 1; i < times; i++) {
+                    result += sep + str;
+                }
+                return result;
+            } else {
+                return "";
+            }
+        },
+
+        //Chance.js Function
+        pad: function (number, pad, width) {
+            // Default pad to 0 if none provided
+            pad = pad || '0';
+            // Convert number to a string
+            number = number + "";
+            return number.length >= width ? number : new Array(width - number.length + 1).join(pad) + number;
+         },
+
+        word: function(n, str) {
+            if(!isNaN(n)) {
+                n = Math.round(n);
+                var words = str.split(" ");
+                return words[n - 1];
+            } else {
+                return "";
+            }
+        },
+
+        word_amount: function(str) {
+            return str.split(" ").length;
+        },
+
+        word_pos: function(word, str) {
+            console.log(str.split(" "));
+            return str.split(" ").indexOf(word) + 1;
+        },
+
+        to_unicode: function(n, str) {
+          return str.charCodeAt(n-1);
+        },
+
+        from_unicode: function(u) {
+          if(u < 1) {
+              return 'undefined';
+          }
+          return String.fromCharCode(Number(u));
+        },
+
+        toAscii: function(bin) {
+            return bin.replace(/\s*[01]{8}\s*/g, function(bin) {
+                return String.fromCharCode(parseInt(bin, 2));
+            });
+        },
+
+        toBinary: function(str, spaceSeparatedOctets) {
+            return str.replace(/[\s\S]/g, function(str) {
+                str = zeroPad(str.charCodeAt().toString(2));
+                return (!1 == spaceSeparatedOctets) ? str : str + " ";
+            });
+        }
+    }, "Pro Tip: All String blocks are case sensitive!"),
+
+    UI: new Extension(
+    "UI",
+    {
+        blocks: [
+            ['w', 'TGBox Title:%s Description:%s', 'TGBox_in', 'Coolness +1!', 'Installed TGB\'s extensions!'],
+            ['-'],
+            ['w', 'Alert Title:%s Description:%s %m.alerts', 'SweetAlert', 'Congratulations!', 'You leveled up your programming skills!', 'success'],
+            //['R', 'Prompt ᴛɪᴛʟᴇ:%s ᴅᴇsᴄʀɪᴘᴛɪᴏɴ:%s ᴘʟᴀᴄᴇʜᴏʟᴅᴇʀ:%s ᴅᴇғᴀᴜʟᴛ:%s', 'SweetPrompt', 'Hi!', 'How are you?', 'Write your mood here!', 'I\'m feeling AWESOME!'], Disabled for now. Prompt version of SweetAlert needs a redo.
+            ['R', 'Confirm Title:%s Description:%s Yes:%s No:%s %m.confirm', 'SweetConfirm', 'Attention!', 'Do you really want to do this?', 'Yes', 'No', 'warning'],
+            ['-'],
+            [' ', 'Alert %s', 'alert', 'Imagine, Create, Share!'],
+            ['r', 'Prompt %s', 'prompt', 'How are you?'],
+            ['b', 'Confirm %s', 'confirm', 'Are you sure?']
+        ],
+        menus: {
+            alerts: ['', 'success', 'error', 'warning', 'info'],
+            confirm: ['warning', 'info', '']
+        }
+    },
+    {
+        TGBox_in: function(title, description, callback) {
             if($("#TGBox").length) {
                 if ($("#TGBox").css("left") !== "-247px") {
                     TGBox_out();
@@ -619,9 +1401,9 @@ TGB.installExtensionUI = function () {
             $("#TGBox").click(function() {
                 TGBox_out();
             });
-        };
+        },
 
-        ext.SweetAlert = function(title, description, type, callback) {
+        SweetAlert: function(title, description, type, callback) {
             swal({
                 title: title,
                 text: description,
@@ -632,9 +1414,9 @@ TGB.installExtensionUI = function () {
             function() {
                 callback();
             });
-        };
+        },
 
-        /*ext.SweetPrompt = function(title, description, placeholder, dflt, callback) {
+        /*SweetPrompt: function(title, description, placeholder, dflt, callback) {
             swal({
                 type: "prompt",
                 title: title,
@@ -645,9 +1427,9 @@ TGB.installExtensionUI = function () {
             }, function(value){
                 callback(value);
             });
-        };*/
+        },*/
 
-        ext.SweetConfirm = function(title, description, yes, no, type, callback) {
+        SweetConfirm: function(title, description, yes, no, type, callback) {
             swal({
                 title: title,
                 text: description,
@@ -663,369 +1445,46 @@ TGB.installExtensionUI = function () {
                       callback(false);
                   }
             });
-        };
+        },
 
-        ext.alert = function(str) {
+        alert: function(str) {
             alert(str);
-        };
+        },
 
-        ext.prompt = function(str) {
+        prompt: function(str) {
             return prompt(str);
-        };
+        },
 
-        ext.confirm = function(str) {
+        confirm: function(str) {
             return confirm(str);
-        };
+        }
+    }, "Prompt and Confirm shouldn't be used inside other UI blocks and Clipboard blocks. A workaround for this is to use variables(or counters) to store their values.", 1),
 
-        ScratchExtensions.register('UI', descriptor, ext);
-    })({});
-};
-
-TGB.installExtensionProgram = function () {
-    (function(ext) {
-
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
-        };
-
-        var default_profile = (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder";
-
-        var descriptor = {
-            blocks: [
-                ['r', 'Project Title', 'proj_title'],
-                ['r', 'Project ID', 'proj_id'],
-                ['r', 'Instructions', 'info'],
-                ['r', 'Notes and Credits', 'notes'],
-                //['r', 'Days since last update', 'lst_upd', ''],
-                ['-'],
-                ['b', 'Shared?', 'shared'],
-                ['b', 'Remix?', 'remixed'],
-                ['-'],
-                ['r', 'Amount of Sprites', 'sprites'],
-                ['r', 'Amount of Scripts', 'scripts'],
-                ['r', 'Amount of Comments', 'comments', ''],
-                ['-'],
-                ['r', 'View Mode', 'mode'],
-                [' ', 'Switch to %m.views mode', 'switch_to', 'Player'],
-                [' ', 'Fullscreen Switch', 'fullscreen'],
-                ['-'],
-                ['w', 'Set clipboard to %s', 's_clip', 'Support!'],
-                //['r', 'Clipboard Data', 'r_clip'], Possibly impossible feature, make a pull request if you have any idea on how to do it!
-                ['-'],
-                ['r', 'Tab Title', 'title'],
-                [' ', 'Set Tab Title to %s', 'set_tab', document.title],
-                ['b', 'Is this tab visible?', 'tab_visible'],
-                ['-'],
-                ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', default_profile],
-                //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
-                ['-'],
-                ['h', 'when %b is true', 'whentrue'],
-                [' ', '%s', '', 'Comment'],
-                ['l', '%s', '', 'Comment'],
-                [' ', 'Log %s', 'log', 'to the console.']
-            ],
-
-            menus: {
-                open: ["user profile of", "Project", "Discussion"],
-                views: ["Fullscreen", "Player", "Editor"],
-            },
-        };
-
-            ext.proj_title = function() {
-                if(typeof is_creator !== "undefined") {
-                    return (is_creator) ? document.getElementsByName("title")[0].value : document.getElementById("title").innerHTML;
-                } else {
-                    return false;
-                }
-            };
-
-            ext.proj_id = function() {
-                return project_id;
-            };
-
-            ext.info = function() {
-                return Scratch.INIT_DATA.PROJECT.model.credits;
-            };
-
-            ext.notes = function() {
-                return notes;
-            };
-
-            /*ext.lst_upd = function() {
-
-            };*/
-
-            ext.shared = function() {
-                return shared;
-            };
-
-            ext.remixed = function() {
-                return remixed;
-            };
-
-            ext.sprites = function() {
-                return $("#sprite-count").html();
-            };
-
-            ext.scripts = function() {
-                return $("#script-count").html();
-            };
-
-            ext.comments = function() {
-                n = $("h4:contains('Comments')").html();
-                return n.substring(n.lastIndexOf("(")+1,n.lastIndexOf(")"));
-            };
-
-            ext.mode = function() {
-                var a = document.URL;
-                var b = a.substr((a.length - 7), (a.length - 1));
-                switch(b) {
-                    case "lscreen":
-                        return "Fullscreen";
-                    case "#editor":
-                        return "Editor";
-                    default:
-                        return "Player";
-                }
-            };
-
-            ext.switch_to = function(mode) {
-                var url = document.URL;
-                var hash = window.location.hash.toLowerCase();
-                mode = mode.toLowerCase();
-
-                if(mode == "fullscreen" || mode == "player" || mode == "editor") {
-                    if(hash !== "") {
-                        window.location = url.replace(hash, '#' + mode);
-                    } else {
-                        window.location = url + '#' + mode;
-                    }
-                }
-            };
-
-            ext.fullscreen = function() {
-                var url = document.URL;
-                var hash = window.location.hash.toLowerCase();
-
-                if(hash == "#player") {
-                    window.location = url.replace(hash, '#fullscreen');
-                }
-                else if(hash == "#fullscreen") {
-                    window.location = url.replace(hash, "#player");
-                }
-                else if (hash !== "#editor"){
-                    window.location = url + "#fullscreen";
-                }
-            };
-
-            ext.s_clip = function(str, callback) {
-                swal({
-                      title: "Clipboard",
-                      text: "Do you want to copy '" + str + "' to your clipboard?",
-                      type: "warning",
-                      showCancelButton: true,
-                      confirmButtonColor: "#DD6B55",
-                      confirmButtonText: "Yes, copy it!"
-                }, function(isConfirm){
-                    if (isConfirm) {
-                        GM_setClipboard(str);
-                        callback();
-                    } else {
-                        callback();
-                    }
-                });
-            };
-
-            // I couldn't find a solution to read the clipboard without a paste event in Chrome, so I'll leave it disabled.
-            /*ext.r_clip = function() {
-                console.log(unsafeWindow.clipboardData.getData("Text"));
-                return unsafeWindow.clipboardData.getData("Text");
-            }*/
-
-            ext.title = function() {
-                return document.title;
-            };
-
-            ext.set_tab = function(str) {
-                document.title = str;
-            };
-
-            ext.tab_visible = function() {
-            return document.visibilityState === "visible";
-            };
-
-            ext.TGB_open = function(type, src, callback) {
-                switch(type) {
-                    case "user profile of":
-                        var new_type = "users";
-                        break;
-                    case "Project":
-                        if(isNaN(src)) {
-                            callback();
-                            return;
-                        }
-                        new_type = "projects";
-                        break;
-                    case "Discussion":
-                        if(isNaN(src)) {
-                            callback();
-                            return;
-                        }
-                        new_type = "discuss/topic";
-                        break;
-                }
-                swal({
-                      title: "Open" + (type == 'user profile of') ? 'User Profile' : type,
-                      text: "Do you want to open '" + src + "' in a new tab?",
-                      type: "warning",
-                      showCancelButton: true,
-                      confirmButtonColor: "#DD6B55",
-                      confirmButtonText: "Yes, open it!"
-                }, function(isConfirm){
-                    if (isConfirm) {
-                        window.open('http://scratch.mit.edu/' + new_type + '/' + src);
-                        callback();
-                    } else {
-                        callback();
-                    }
-                });
-            };
-
-            ext.log = function(msg) {
-                console.log(msg);
-            };
-
-            /*YTplayer;
-            ext.youtube = function(videoID, x, y) {
-                $("#YTplayer").remove();
-                $(".stage").append('<div id="YTplayer"></div>');
-                YT_style(x, y);
-                YTplayer = new YT.Player('YTplayer', {
-                    height: '360',
-                    width: '480',
-                    videoId: videoID,
-                    events: {
-                        'onReady': onPlayerReady,
-                        'onStateChange': onPlayerStateChange
-                    }
-                });
-            };*/
-
-            ext.when_true = function(bool) {return bool;};
-
-        ScratchExtensions.register('Program & Web', descriptor, ext);
-    })({});
-};
-
-TGB.installExtensionColor = function () {
-    (function(ext) {
-
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
-        };
-
-        var descriptor = {
-            blocks: [
-                ['r', '%c', 'color', math.pickRandom([255, 65280, 16711680])],
-                ['-'],
-                //['r', 'mix %c and %c', 'mix'],
-                ['r', 'Hex%s to color', 'hex2color', '#ffffff'],
-                ['r', 'R:%s G:%s B:%s', 'rgb2color', 255, 255, 255],
-                ['-'],
-                ['r', '%m.rgb of %c', 'color2rgb', 'Red'],
-            ],
-
-            menus: {
-                rgb: ["Red", "Green", "Blue"],
-            },
-        };
-            ext.color = function(integer) {return integer;};
-
-            ext.hex2color = function(s) {
-                if(s.charAt(0) != '#') {
-                    s = '#' + s;
-                }
-                if(/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(s)) {
-                    var patt = /^#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})$/;
-                    var matches = patt.exec(s);
-                    return 65536*parseInt(matches[1], 16) + 256*parseInt(matches[2], 16) + parseInt(matches[3], 16);
-                } else {
-                    console.log('Invalid hex color:' + s);
-                }
-            };
-
-            ext.rgb2color = function(r, g ,b) {
-                r = Number(r);
-                g = Number(g);
-                b = Number(b);
-                if(r < 256 && g < 256 && b < 256) {
-                    return 65536*r + 256*g + b;
-                } else {
-                    console.log('Invalid rgb color: rgb(' + r + ', ' + g + ', ' + b + ').');
-                }
-            };
-
-            //256^2*r + 256*g + b = RGB Integer
-            ext.color2rgb = function(rgb,  integer) {
-                integer = dec_fix(integer);
-                switch(rgb) {
-                    case "Blue":
-                        return integer % 256;
-                    case "Green":
-                        return Math.floor(integer / 256) % 256;
-                    case "Red":
-                        return Math.floor(integer / 65536);
-
-                }
-            };
-
-            /*ext.mix = function(color1, color2) {
-                //color_1 = $.Color(color2hex(color1));
-                //color_2 = $.Color(color2hex(color2));
-                //return hex2color(Color_mixer.mix(color_1, color_2));
-                return ;
-            };*/
-
-        ScratchExtensions.register('Color', descriptor, ext);
-    })({});
-};
-
-TGB.installExtensionUser = function () {
-    (function(ext) {
-
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
-        };
-
-        var descriptor = {
-            blocks: [
-                ['r', 'User Language', 'get_lang', ''],
-                ['r', 'Browser Language', 'get_browser_lang', ''],
-                ['r', 'Unread Notifications', 'get_notifications'],
-                ['-'],
-                ['b', 'New Scratcher?', 'new_scratcher'],
-                ['b', 'Creator?', 'creator'],
-                ['b', 'Admin?', 'admin'],
-                ['-'],
-                ['b', 'Online?', 'online']
-            ],
-        };
-
-        ext.get_lang = function(callback) {
+    User: new Extension(
+    "User",
+    {
+        blocks: [
+            ['r', 'User Language', 'get_lang', ''],
+            ['r', 'Browser Language', 'get_browser_lang', ''],
+            ['r', 'Unread Notifications', 'get_notifications'],
+            ['-'],
+            ['b', 'New Scratcher?', 'new_scratcher'],
+            ['b', 'Creator?', 'creator'],
+            ['b', 'Admin?', 'admin'],
+            ['-'],
+            ['b', 'Online?', 'online']
+        ],
+    },
+    {
+        get_lang: function() {
             return getCookie("scratchlanguage");
-        };
+        },
 
-        ext.get_browser_lang = function() {
+        get_browser_lang: function() {
             return userLanguage;
-        };
+        },
 
-        ext.get_notifications = function() {
+        get_notifications: function() {
             return $(".notificationsCount").html();
             // Old way. It was able to return if the user had a new message even before he knew it through the Scratch website,
             // but I don't think the potential extra load on Scratch Servers is not even close to be worth it.
@@ -1033,604 +1492,49 @@ TGB.installExtensionUser = function () {
                 notifications = data.msg_count;
                 callback(notifications);
             });*/
-        };
+        },
 
-        ext.new_scratcher = function() {
+        new_scratcher: function() {
             return !scratcher;
-        };
+        },
 
-        ext.creator = function() {
+        creator: function() {
             return (typeof is_creator !== "undefined") ? is_creator : "Unknown Author";
-        };
+        },
 
-        ext.admin = function() {
+        admin: function() {
             return admin;
-        };
+        },
 
-        ext.online = function() {
-            //"if" disabled until Firefox version comes out.
+        online: function() {
+            //"if" and "else" disabled until Firefox version comes out.
             /*if(contains(navigator.userAgent, "Firefox")) {
                 return online;
             } else {*/
             return window.navigator.onLine;
             //}
-        };
-
-        ScratchExtensions.register('User', descriptor, ext);
-    })({});
-};
-
-TGB.installExtensionSpeech = function () {
-    (function(ext) {
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
-        };
-
-        var default_username = (typeof data !== "undefined") ? data.user.username : "a visitor";
-
-        var descriptor = {
-            blocks: [
-                ['r', 'Voice', 'voice_lang'],
-                ['-'],
-                [' ', 'Set voice to %m.voices', 'set_voice', 'Google US English'],
-                [' ', 'Set voice to %n', 'set_voice'],
-                ['-'],
-                [' ', 'Speak %s', 'speak_text', 'You are ' + default_username],
-                ['w', 'Speak %s and wait', 'speak_wait', 'You are a ' + (scratcher ? 'Scratcher' : 'New Scratcher')],
-                ['-'],
-                [' ', 'Pause speech', 'pause_voice'],
-                [' ', 'Resume speech', 'resume_voice'],
-                [' ', 'Cancel speech', 'cancel_voice'],
-                ['-'],
-                ['b', 'Speaking?', 'check_speech']
-            ],
-
-            menus: {
-                voices: _get_voices(),
-            }
-        };
-
-        //This script was started by Sayamindu, I finished and improved it!
-        lang = "Google US English";
-        ext.voice_lang = function() {
-            return lang;
-        };
-
-        ext.speak_text = function (text) {
-            var say = new SpeechSynthesisUtterance(text.toString()),
-                voices = window.speechSynthesis.getVoices();
-            say.voice = voices.filter(function(voice) { return voice.name == lang; })[0];
-            speechSynthesis.speak(say);
-        };
-
-        ext.set_voice = function(gname) {
-            var g = parseInt(gname, 10),
-                voices = speechSynthesis.getVoices();
-            lang = (isNaN(g) === false) ? ((0 < g <= voices.length) ? voices[g - 1].name : console.log("Voice #" + g + " not found.")) : lang = gname;
-        };
-
-        ext.pause_voice = function () {
-            speechSynthesis.pause();
-        };
-
-        ext.resume_voice = function () {
-            speechSynthesis.resume();
-        };
-
-        ext.cancel_voice = function () {
-            speechSynthesis.cancel();
-        };
-
-        ext.check_speech = function() {
-            return speechSynthesis.speaking;
-        };
-
-        ext.speak_wait = function (text, callback) {
-            ext.speak_text(text);
-            waitfor(ext.check_speech, false, 100, function() {
-                callback();
-            });
-        };
-
-        function _get_voices() {
-            var ret = [];
-            var voices = speechSynthesis.getVoices();
-
-            for(var i = 0; i < voices.length; i++ ) {
-                 ret.push(voices[i].name);
-            }
-
-            return ret;
         }
-
-        ScratchExtensions.register('Speech', descriptor, ext);
-    })({});
+    })
 };
 
-TGB.installExtensionStrings = function () {
-    (function(ext) {
-
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Pro Tip: All of them are case sensitive!'};
-        };
-
-        var descriptor = {
-            blocks: [
-                ['r', 'Substring of %s starting at %n to %n', 'sub_string', 'Constructor', 1, 9],
-                ['-'],
-                ['b', '%s %m.str_checks %s', 'string_checks', 'Car Jack', 'contains', 'Jack'],
-                ['b', 'Is %s %m.uplow ?', 'up_low', 'STRING', 'uppercase'],
-                ['r', '%m.str_functions %s', 'string_functions', 'Capitalize', 'scratch'],
-                ['-'],
-                //['r', 'Place %n that %s is in %s', 'nth_occurence', '2', 'can', 'Can a can can a can?'], "ToDo" block.
-                ['r', 'Times %s is in %s', 'times_is_in', 'can', 'Can a can can a can?'],
-                ['r', '%s find %s starting at position %n', 'find_starting_at', 'Apple', 'p', 3],
-                ['-'],
-                ['r', 'Replace letters %n to %n of %s with %s', 'replace_substr', 1, 5, "Hello World", "Hi"],
-                ['r', 'Replace every %s with %s in %s', 'replace_every', 'u', 'a', 'cut'],
-                ['r', 'Repeat %s %n times separated by %s', 'repeat', 'Scratch', 2],
-                ['r', 'Pad %s with %s until it has length %n', 'pad', 1, 0, 2],
-                ['-'],
-                ['r', 'Word %n of %s', 'word', 2, 'Good Morning!'],
-                ['r', 'Words in %s', 'word_amount', 'Scratch Day'],
-                ['r', '# of word %s in %s', 'word_pos', 'year!', 'Happy new year!'],
-                ['-'],
-                ['r', 'Unicode of letter %n of %s', 'to_unicode', 1, 'Unicode'],
-                ['r', 'Unicode %s as letter', 'from_unicode', 49],
-                ['r', 'Binary of %s', 'toBinary', 'Scratch'],
-                ['r', 'ASCII of %s', 'toAscii', '01000001']
-            ],
-
-            menus: {
-                str_checks: ["contains", "starts with", "ends with"],
-                uplow: ["uppercase", "lowercase", "alphanumeric", "mixed Lower & Upper cases"],
-                str_functions: ["Capitalize", "Capitalize All Of", "Uppercase", "Lowercase", "Reverse", "Shuffle", "Trim blanks of"],
+TGB.Sensing.onInstall = function() {
+    if(keyDetection === false) {
+        $(document).on("keyup keydown", function(e) {
+            switch(e.type) {
+                case "keydown" :
+                    keysPressed[e.keyCode] = true;
+                    break;
+                case "keyup" :
+                    keysPressed[e.keyCode] = false;
+                    break;
             }
-        };
+        });
 
-        ext.sub_string = function(a, b, c) {
-            a = String(a);
-            return a.substring((b - 1), c);
-        };
-
-        ext.string_checks = function(str1, type, str2) {
-            switch(type) {
-                case "contains":
-                    return contains(str1, str2);
-                case "starts with":
-                    return startsWith(str1, str2);
-                case "ends with":
-                    return endsWith(str1, str2);
-            }
-        };
-
-        ext.up_low = function(str, cases) {
-            str = String(str);
-            switch(cases) {
-                case "uppercase":
-                    return str === str.toUpperCase();
-                case "lowercase":
-                    return str === str.toLowerCase();
-                case "mixed Lower & Upper cases":
-                    return str !== str.toUpperCase() && str !== str.toLowerCase();
-                case "alphanumeric":
-                    return /^[\w\d]*$/.test(str);
-            }
-        };
-
-        ext.string_functions = function(type, str) {
-           str = String(str);
-           switch(type) {
-               case "Capitalize":
-                   return capitalizeFirstLetter(str);
-               case "Capitalize All Of":
-                   return capitalize(str);
-               case "Uppercase":
-                   return str.toUpperCase();
-               case "Lowercase":
-                   return str.toLowerCase();
-               case "Reverse":
-                   return reverse(str);
-               case "Shuffle":
-                   return shuffle(str);
-               case "Trim blanks of":
-                   return str.trim();
-            }
-        };
-
-        ext.times_is_in = function(a, b) {
-            return b.match(new RegExp(a, "g")).length;
-        };
-
-        ext.find_starting_at = function (a, b, c) {
-            return a.indexOf(b, parseInt(c) - 1) + 1;
-        };
-
-        ext.replace_substr = function(a, b, str, sub_string) {
-            return str.substr(0, a - 1) + sub_string + str.substr(b);
-        };
-
-        ext.replace_every = function(a, b, str) {
-            return str.split(a).join(b);
-        };
-
-        ext.repeat = function (str, times, sep) {
-            if(times > 0) {
-                times = Math.round(times);
-                var result = str;
-                for(i = 1; i < times; i++) {
-                    result += sep + str;
-                }
-                return result;
-            } else {
-                return "";
-            }
-        };
-
-        //Chance.js Function
-        ext.pad = function (number, pad, width) {
-            // Default pad to 0 if none provided
-            pad = pad || '0';
-            // Convert number to a string
-            number = number + "";
-            return number.length >= width ? number : new Array(width - number.length + 1).join(pad) + number;
-         };
-
-        ext.word = function(n, str) {
-            if(!isNaN(n)) {
-                n = Math.round(n);
-                var words = str.split(" ");
-                return words[n - 1];
-            } else {
-                return "";
-            }
-        };
-
-        ext.word_amount = function(str) {
-            return str.split(" ").length;
-        };
-
-        ext.word_pos = function(word, str) {
-            console.log(str.split(" "));
-            return str.split(" ").indexOf(word) + 1;
-        };
-
-        ext.to_unicode = function(n, str) {
-          return str.charCodeAt(n-1);
-        };
-
-        ext.from_unicode = function(u) {
-          if(u < 1) {
-              return 'undefined';
-          }
-          return String.fromCharCode(Number(u));
-        };
-
-        ext.toAscii = function(bin) {
-            return bin.replace(/\s*[01]{8}\s*/g, function(bin) {
-                return String.fromCharCode(parseInt(bin, 2));
-            });
-        };
-
-        zeroPad = function(num) {
-            return "00000000".slice(String(num).length) + num;
-        };
-
-        ext.toBinary = function(str, spaceSeparatedOctets) {
-            return str.replace(/[\s\S]/g, function(str) {
-                str = zeroPad(str.charCodeAt().toString(2));
-                return (!1 == spaceSeparatedOctets) ? str : str + " ";
-            });
-        };
-
-        ScratchExtensions.register('Strings', descriptor, ext);
-    })({});
+        keyDetection = true;
+    }
 };
 
-TGB.installExtensionSensing = function () {
-    (function(ext) {
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 1, msg: 'May be Laggy'};
-        };
-
-        if(keyDetection === false) {
-            $(document).on("keyup keydown", function(e) {
-                switch(e.type) {
-                    case "keydown" :
-                        keysPressed[e.keyCode] = true;
-                        break;
-                    case "keyup" :
-                        keysPressed[e.keyCode] = false;
-                        break;
-                }
-            });
-
-            keyDetection = true;
-        }
-
-        var descriptor = {
-            blocks: [
-                ['h', 'when key %m.keys is pressed', 'h_check_key', 'shift'],
-                ['-'],
-                ['b', '%m.keys key pressed?', 'check_key', 'shift'],
-                ['b', '%n key pressed?', 'check_key', 17],
-                ['-'],
-                ['r', 'Which key is pressed?', 'which_key']
-            ],
-
-            menus: {
-                keys: ['shift', 'ctrl', 'enter', 'backspace', 'alt', 'tab', 'caps', 'esc', 'any'],
-            }
-        };
-
-        last_h_value = false;
-
-        ext.h_check_key = function(key) {
-            if(document.activeElement === $('object#scratch')[0]) { //Check if Flash is focused. (Security Measure)
-                if(!last_h_value && menuCheck(key) === true) {
-                    last_h_value = true;
-                    return true;
-                } else {
-                    last_h_value = false;
-                    return false;
-                }
-            } //else isn't necessary here!
-        };
-
-        ext.check_key = function(key_code) {
-            if(document.activeElement === $('object#scratch')[0]) {
-                if (isNaN(Number((key_code)))) {
-                    return menuCheck(key_code);
-                } else {
-                    return isKeyPressed(key_code);
-                }
-            } else {
-                return false;
-            }
-        };
-
-        ext.which_key = function() {
-            if(document.activeElement === $('object#scratch')[0]) {
-                key = keysPressed.indexOf(true);
-                return key;
-            } else {
-                return -1;
-            }
-        };
-
-        ScratchExtensions.register('Sensing', descriptor, ext);
-    })({});
-};
-
-TGB.installExtensionDate = function () {
-    (function(ext) {
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
-        };
-
-        var descriptor = {
-            blocks: [
-                ['r', 'UTC %m.types', 'UTC', 'Hours'],
-                ['r', 'User GMT Timezone Offset', 'timezone'],
-            ],
-
-            menus: {
-                types: ["Hours", "Minutes", "Seconds", "Day of the Week", "Date", "Month", "Year"],
-            }
-        };
-
-         ext.UTC = function(type) {
-            var d = new Date();
-            switch(type) {
-                case "Milliseconds":
-                    return d.getUTCMilliseconds();
-                case "Seconds":
-                    return d.getUTCSeconds();
-                case "Minutes":
-                    return d.getUTCMinutes();
-                case "Hours":
-                    return d.getUTCHours();
-                case "Date":
-                    return d.getUTCDate();
-                case "Month":
-                    return d.getUTCMonth();
-                case "Year":
-                    return d.getUTCFullYear();
-                case "Day of the Week":
-                    switch (d.getDay()) {
-                        case 0:
-                            day = "Sunday";
-                            break;
-                        case 1:
-                            day = "Monday";
-                            break;
-                        case 2:
-                            day = "Tuesday";
-                            break;
-                        case 3:
-                            day = "Wednesday";
-                            break;
-                        case 4:
-                            day = "Thursday";
-                            break;
-                        case 5:
-                            day = "Friday";
-                            break;
-                        case 6:
-                            day = "Saturday";
-                            break;
-                    }
-                    return day;
-            }
-        };
-
-        ext.timezone = function() {
-            var d = new Date();
-            return d.getTimezoneOffset();
-        };
-
-        ScratchExtensions.register('Date', descriptor, ext);
-    })({});
-};
-
-TGB.installExtensionData = function () {
-    (function(ext) {
-
-        ext._shutdown = function() {};
-
-        ext._getStatus = function() {
-            return {status: 2, msg: 'Installed'};
-        };
-
-        var descriptor = {
-            blocks: [
-                ['r', 'Counter %s', 'counter', 'Help'],
-                ['r', 'Cookie %s', 'cookie', '!Cookie'],
-                ['-'],
-                [' ', 'Set counter %s to %s', 's_counter', 'Score', 10],
-                [' ', 'Increase counter %s by %s', 'i_counter', 'Score', 1],
-                [' ', 'Reset counter %s', 'r_counter', 'Score'],
-                [' ', 'Reset all counters', 'r_all_counters'],
-                ['-'],
-                [' ', 'Set cookie %s to %s', 's_cookie', 'Level', 1],
-                [' ', 'Increase cookie %s by %s', 'i_cookie', 'Level', 1],
-                [' ', 'Delete cookie %s', 'd_cookie', 'Level'],
-                [' ', 'Delete all cookies', 'd_all_cookies']
-            ]
-        };
-
-        //Holder
-        Tips = [
-            "You can use counters as local variables!",
-            "To open Project and Discussion pages you have to use their respective ID's.",
-            "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
-        ];
-        counters = {Help: Tips};
-
-        //Blocks
-        ext.counter = function(name) {
-            if(name != 'Help' || counters.Help != Tips) {
-                return counters[name];
-            } else {
-                return math.pickRandom(counters.Help);
-            }
-        };
-
-        ext.cookie = function(name) {
-            if (storage) {
-                return storage[name];
-            }
-        };
-
-        ext.s_counter = function(name, val) {
-            if(Object.keys(counters).length <= 50001) {
-                /*if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("Counter '" + name + "' set to '" + val + "'.");
-                }*/
-                counters[name] = val;
-            } else {
-                if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("Too many counters.");
-                }
-            }
-        };
-
-        ext.i_counter = function(name, val) {
-            if(Object.keys(counters).length <= 50001) {
-                /*if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("Counter '" + name + "' increased by '" + val + "'.");
-                }*/
-                if(typeof counters[name] != "undefined") {
-                    counters[name] += val;
-                } else {
-                    counters[name] = val;
-                }
-            }
-            else if(typeof is_creator !== "undefined" && is_creator) {
-                console.log("Too many counters.");
-            }
-        };
-
-        ext.r_counter = function(name) {
-            /*if(typeof is_creator !== "undefined" && is_creator) {
-                console.log("Counter '" + name + "' was reseted.");
-            }*/
-            delete counters[name];
-        };
-
-        ext.r_all_counters = function() {
-            /*if(typeof is_creator !== "undefined" && is_creator) {
-                console.log("All counters were reseted.");
-            }*/
-            counters = {Help: Tips};
-        };
-
-        ext.s_cookie = function(name, val) {
-            if(storage) {
-                if(storage.length <= 500) {
-                    /*if(typeof is_creator !== "undefined" && is_creator) {
-                        console.log("Cookie '" + name + "' set to '" + val + "'.");
-                    }*/
-                    storage.setItem(name, val);
-                } else {
-                    if(typeof is_creator !== "undefined" && is_creator) {
-                        console.log("Too many cookies.");
-                    }
-                }
-            }
-        };
-
-        ext.i_cookie = function(name, val) {
-            if(storage) {
-                if(storage.length <= 500) {
-                    /*if(typeof is_creator !== "undefined" && is_creator) {
-                        console.log("Cookie '" + name + "' increased by '" + val + "'.");
-                    }*/
-                    if(typeof storage[name] != "undefined") {
-                        if(isNaN(val) || isNaN(storage[name])) {
-                            storage[name] += val;
-                        } else {
-                            storage[name] = Number(storage[name]) + Number(val);
-                        }
-                    } else {
-                        storage.setItem(name, val);
-                    }
-                }
-                else if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("Too many cookies.");
-                }
-            }
-        };
-
-        ext.d_cookie = function(name) {
-            if(storage) {
-                /*if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("Cookie '" + name + "' was deleted.");
-                }*/
-                storage.removeItem(name);
-            }
-        };
-
-        ext.d_all_cookies = function() {
-            if(storage) {
-                /*if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("All cookies were deleted.");
-                }*/
-                storage.clear();
-            }
-        };
-
-        ScratchExtensions.register('Data', descriptor, ext);
-    })({});
-};
+//Run the extensions//////////////////////////////////////////////////////////////////////////
 
 waitfor(SWFready.isResolved, true, 100, function() {
     extensions = Object.getOwnPropertyNames(TGB).sort();
@@ -1646,7 +1550,7 @@ waitfor(SWFready.isResolved, true, 100, function() {
             for(var a in chosenExtensions) {
                 if (chosenExtensions.hasOwnProperty(a)) {
                   chosenExtensions[a] = chosenExtensions[a].trim();
-                  if(extensions.indexOf('installExtension' + chosenExtensions[a]) === -1) {
+                  if(extensions.indexOf(chosenExtensions[a]) === -1) {
                       extensionSpecified = false;
                       break;
                   }
@@ -1681,22 +1585,22 @@ waitfor(SWFready.isResolved, true, 100, function() {
                             for(var i in chosenExtensions) {
                               if (chosenExtensions.hasOwnProperty(i)) {
                                 console.log('Installing extension ' + chosenExtensions[i]);
-                                TGB['installExtension' + chosenExtensions[i]]();
+                                TGB[chosenExtensions[i]].install();
                               }
                             }
                         } else {
                             for(var ext in extensions) {
                               if (extensions.hasOwnProperty(ext)) {
-                                console.log('Installing extension ' + extensions[ext].slice(16));
-                                TGB[extensions[ext]]();
+                                console.log('Installing extension ' + extensions[ext]);
+                                TGB[extensions[ext]].install();
                               }
                             }
                         }
                     } catch(e) {
                         for(var i in extensions) {
                           if (extensions.hasOwnProperty(i)) {
-                            console.log('Installing extension ' + extensions[i].slice(16));
-                            TGB[extensions[i]]();
+                            console.log('Installing extension ' + extensions[i]);
+                            TGB[extensions[i]].install();
                           }
                         }
                     }
