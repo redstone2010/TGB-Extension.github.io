@@ -6,8 +6,8 @@
 // @namespace    http://felizolinha.github.io
 // @icon         http://tgb-extension.github.io/Icon.png
 // @grant        GM_setClipboard
-// @grant 		 GM_addStyle
-// @grant  	     GM_getResourceText
+// @grant        GM_addStyle
+// @grant        GM_getResourceText
 // @grant        unsafeWindow
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
@@ -28,16 +28,16 @@ GM_addStyle(GM_getResourceText("sweet-alert"));
 
 //Variables///////////////////////////////////////////////////////////////////////////////////
 var TGB = {},
-    wait = 2.5,
-    userLanguage = window.navigator.language, //Check for the userLanguage prop. also in case IE needs support.
-    scratcher,
-    language,
-    keysPressed = [],
-    keyDetection = false,
-    online,
-    storage,
-    fail,
-    uid;
+    wait = 2.5;
+
+var scratcher,
+    userLanguage = window.navigator.language; //Check for the userLanguage prop. also in case IE needs support.
+    //online; Activate for Firefox version
+
+var keysPressed = [],
+    keyDetection = false;
+
+var storage;
 
 waitfor(isDataDefined, true, 100, function() {
     is_creator = data.user.username == data.project.creator;
@@ -49,14 +49,22 @@ waitfor(isDataDefined, true, 100, function() {
 waitfor(isScratchDefined, true, 100, function() {
     admin = Scratch.INIT_DATA.ADMIN;
     notes = Scratch.INIT_DATA.PROJECT.model.notes;
+
     // Semi-fix for sharing projects with extensions!
     Scratch.Project.ShareBar.prototype.shareProject = function() {
         this.model.share();
     };
 });
 
+commentAddition = [
+    "Please read the instructions before commenting! Thanks :)",
+    "Please use the forum to post your scores!",
+    "Feel free to make your requests here!",
+    "Please use my profile to make requests! Thanks :)",
+    "Thanks for commenting! :)"
+];
+
 console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
-commentAddition = ["Please read the instructions before commenting! Thanks :)", "Please use the forum to post your scores!", "Feel free to make your requests here!", "Please use my profile to make requests! Thanks :)", "Thanks for commenting! :)"];
 
 //iFrame Shim with Pepperflash Detection//////////////////////////////////////////////////////
 //Pepperflash detection according to Igor Shastin's answer at http://stackoverflow.com/questions/12866060/detecting-pepper-ppapi-flash-with-javascript
@@ -171,12 +179,15 @@ function onPlayerStateChange(event) {
 //By Mathias Bynens
 
 try {
-  uid = new Date;
-  (storage = window.localStorage).setItem(uid, uid);
-  fail = storage.getItem(uid) != uid;
-  storage.removeItem(uid);
-  fail && (storage = false);
-  storage['!Cookie'] = 1; //Just a little Easter Egg :p
+    var fail,
+        uid;
+
+    uid = new Date;
+    (storage = window.localStorage).setItem(uid, uid);
+    fail = storage.getItem(uid) != uid;
+    storage.removeItem(uid);
+    fail && (storage = false);
+    storage['!Cookie'] = 1; //Just a little Easter Egg, there's no need to set it to 1 again after resetting :p
 } catch (exception) {}
 
 //Esrever/////////////////////////////////////////////////////////////////////////////////////
@@ -233,13 +244,13 @@ function endsWith(a, str) {
     return a.slice(-str.length) == str;
 }
 
-capitalize = function(b, str) {
-    return b.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+capitalize = function(str) {
+    return str.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
 };
 
-shuffle = function (k, str) {
-    var a = k.split(""),
-    n = a.length;
+shuffle = function (str) {
+    var a = str.split(""),
+        n = a.length;
 
     for(var i = n - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
@@ -656,7 +667,7 @@ TGB.installExtensionProgram = function () {
             return {status: 2, msg: 'Installed'};
         };
 
-		var default_profile = (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder";
+        var default_profile = (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder";
 
         var descriptor = {
             blocks: [
@@ -819,7 +830,7 @@ TGB.installExtensionProgram = function () {
             };
 
             ext.tab_visible = function() {
-        	return document.visibilityState === "visible";
+            return document.visibilityState === "visible";
             };
 
             ext.TGB_open = function(type, src, callback) {
@@ -988,7 +999,7 @@ TGB.installExtensionUser = function () {
         };
 
         ext.get_browser_lang = function() {
-         	return userLanguage;
+            return userLanguage;
         };
 
         ext.get_notifications = function() {
@@ -1034,7 +1045,7 @@ TGB.installExtensionSpeech = function () {
             return {status: 2, msg: 'Installed'};
         };
 
-		var default_username = (typeof data !== "undefined") ? data.user.username : "a visitor";
+        var default_username = (typeof data !== "undefined") ? data.user.username : "a visitor";
 
         var descriptor = {
             blocks: [
@@ -1646,8 +1657,8 @@ waitfor(SWFready.isResolved, true, 100, function() {
                         if(extensionSpecified) {
                             for(var i in chosenExtensions) {
                               if (chosenExtensions.hasOwnProperty(i)) {
-                              	console.log('Installing extension ' + chosenExtensions[i]);
-                              	TGB['installExtension' + chosenExtensions[i]]();
+                                console.log('Installing extension ' + chosenExtensions[i]);
+                                TGB['installExtension' + chosenExtensions[i]]();
                               }
                             }
                         } else {
@@ -1677,20 +1688,20 @@ waitfor(SWFready.isResolved, true, 100, function() {
         JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
     }
 
-	if(typeof is_creator !== "undefined") {
-		overviewHtml = ($('#info textarea').html() === null) ? $('.overview::lt(1)').html() : $('#info textarea').html();
-		searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
-		numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
+    if(typeof is_creator !== "undefined") {
+        overviewHtml = ($('#info textarea').html() === null) ? $('.overview::lt(1)').html() : $('#info textarea').html();
+        searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
+        numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
 
-		if(searchAddition !== false) {
-			if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
-				$('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
-			} else {
-				$('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 11), ''));
-			}
-			$('textarea[name=content]').focus( function(){
-				JSsetProjectBanner(commentAddition[numberAddition - 1]);
-			});
-		}
-	}
+        if(searchAddition !== false) {
+            if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
+                $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
+            } else {
+                $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 11), ''));
+            }
+            $('textarea[name=content]').focus( function(){
+                JSsetProjectBanner(commentAddition[numberAddition - 1]);
+            });
+        }
+    }
 });
