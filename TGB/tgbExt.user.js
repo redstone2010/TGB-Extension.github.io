@@ -45,11 +45,9 @@ function Extension(name /* String */, _descriptor /* Object */, _functions /* Ob
             this.onInstall();
         } catch (e) {}
         //Install Extension
-        ScratchExtensions.register(name, _descriptor, this.functions);
+        ScratchExtensions.register(name, _descriptor /* Objects: blocks, menus, url */, this.functions);
     };
 }
-
-//Extension.prototype.functions = function _shutdown() {};
 
 //Welcome easter egg!/////////////////////////////////////////////////////////////////////////
 
@@ -448,6 +446,7 @@ TGB = {
             return;
         },*/
     }),
+
     Data: new Extension(
     "Data",
     {
@@ -1039,7 +1038,7 @@ TGB = {
             }
             swal({
                   title: "Open" + (type == 'user profile of') ? 'User Profile' : type,
-                  text: "Do you want to open '" + src + "' in a new tab?",
+                  text: "Do you want to open the profile of '" + src + "' in a new tab?",
                   type: "warning",
                   showCancelButton: true,
                   confirmButtonColor: "#DD6B55",
@@ -1193,6 +1192,7 @@ TGB = {
             });
         }
     }),
+
     Strings: new Extension(
     "Strings",
     {
