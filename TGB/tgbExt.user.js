@@ -649,7 +649,7 @@ TGB = {
             ['r', '%n ^ %n', 'power', '', ''],
             ['r', '%n \u221a%n', 'nth_root', '', ''],
             ['-'],
-            ['r', 'atan2 of x:%n y:%n', 'atan2', 1, 1],
+            ['r', 'atan2 of y:%n x:%n', 'atan2', 1, 1],
             ['r', 'evaluate %s', 'evaluate', '5.08 cm to inch'],
             ['-'],
             ['b', '%s %m.compare %s', 'compare', 1, '\u2260', 1],
@@ -712,8 +712,8 @@ TGB = {
           return math.format(math.eval(s), 16);
         },
 
-        atan2: function(x, y) {
-          return Math.atan2(x, y) * 180 / Math.PI;
+        atan2: function(y, x) {
+          return Math.atan2(y, x) * 180 / Math.PI;
         },
 
         compare: function(a, type, b) {
