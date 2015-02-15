@@ -9,6 +9,7 @@
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        unsafeWindow
+// @resource     version http://tgbsproxy.x10.bz/?p=TGB/version&mime=text/plain
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
 // @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
@@ -65,7 +66,17 @@ function waitfor(test, expectedValue, msec, callback) {
     callback();
 }
 
-//Check if Scratch's Variables are defined////////////////////////////////////////////////////
+function second_waitfor(test, expectedValue, msec, callback) {
+    while (test() !== expectedValue) {
+        setTimeout(function() {
+            waitfor(test, expectedValue, msec, callback);
+        }, msec);
+        return;
+    }
+    callback();
+}
+
+//waitfor helper functions////////////////////////////////////////////////////////////////////
 
 function isDataDefined() {
     try {
@@ -81,6 +92,10 @@ function isScratchDefined() {
     } catch(e) {
         return false;
     }
+}
+
+function isPageVisible() {
+    return document.visibilityState === "visible";
 }
 
 //Variables///////////////////////////////////////////////////////////////////////////////////
@@ -1535,6 +1550,57 @@ TGB.Sensing.onInstall = function() {
 };
 
 //Run the extensions//////////////////////////////////////////////////////////////////////////
+install_swal = function() {
+    swal({
+        title: "Load TGB's Extension?",
+        text: "If so, wait until the project finishes loading\n and then click on the \"Yes!\" button.",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "Yes!",
+        cancelButtonText: 'No! :(',
+        closeOnConfirm: true
+    }, function(isConfirmed) {
+        if(isConfirmed) {
+            swal({
+                title: "Loading...",
+                text: "Loading TGB's Extensions",
+                type: "info",
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "Ok!",
+            });
+            setTimeout(function() {
+                console.log('Loading Extensions...');
+                try {
+                    if(extensionSpecified) {
+                        for(var i in chosenExtensions) {
+                            if (chosenExtensions.hasOwnProperty(i)) {
+                                console.log('Installing extension ' + chosenExtensions[i]);
+                                TGB[chosenExtensions[i]].install();
+                            }
+                        }
+                    } else {
+                        for(var ext in extensions) {
+                            if (extensions.hasOwnProperty(ext)) {
+                                console.log('Installing extension ' + extensions[ext]);
+                                TGB[extensions[ext]].install();
+                            }
+                        }
+                    }
+                } catch(e) {
+                    for(var i in extensions) {
+                        if (extensions.hasOwnProperty(i)) {
+                            console.log('Installing extension ' + extensions[i]);
+                            TGB[extensions[i]].install();
+                        }
+                    }
+                }
+                console.log('Extensions loaded!');
+                swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1000, type: "success"});
+            }, 50);
+        }
+    });
+};
 
 waitfor(SWFready.isResolved, true, 100, function() {
     extensions = Object.getOwnPropertyNames(TGB).sort();
@@ -1560,56 +1626,39 @@ waitfor(SWFready.isResolved, true, 100, function() {
     } catch(e) {}
 
     setTimeout(function() {
-        swal({
-            title: "Load TGB's Extension?",
-            text: "If so, wait until the project finishes loading\n and then click on the \"Yes!\" button.",
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
-            confirmButtonText: "Yes!",
-            cancelButtonText: 'No! :(',
-            closeOnConfirm: false
-        }, function(isConfirm){
-            if(isConfirm) {
-                swal({
-                    title: "Loading...",
-                    text: "Loading TGB's Extensions",
-                    type: "info",
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Ok!",
-                });
-                setTimeout(function() {
-                    console.log('Loading Extensions...');
-                    try {
-                        if(extensionSpecified) {
-                            for(var i in chosenExtensions) {
-                              if (chosenExtensions.hasOwnProperty(i)) {
-                                console.log('Installing extension ' + chosenExtensions[i]);
-                                TGB[chosenExtensions[i]].install();
-                              }
-                            }
-                        } else {
-                            for(var ext in extensions) {
-                              if (extensions.hasOwnProperty(ext)) {
-                                console.log('Installing extension ' + extensions[ext]);
-                                TGB[extensions[ext]].install();
-                              }
-                            }
-                        }
-                    } catch(e) {
-                        for(var i in extensions) {
-                          if (extensions.hasOwnProperty(i)) {
-                            console.log('Installing extension ' + extensions[i]);
-                            TGB[extensions[i]].install();
-                          }
-                        }
-                    }
-                    console.log('Extensions loaded!');
-                    swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1000, type: "success"});
-                }, 50);
-            }
-        });
-    });
+        if(Number(GM_getResourceText("version")) != GM_info.script.version) {
+            swal({
+                title: "v" + Number(GM_getResourceText("version")) + " Available!",
+                text: "To update, click the \"Yes!\" button and click on the \"reinstall\" button that will appear in the next page!",
+                type: "info",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "Yes!",
+                cancelButtonText: 'No!'
+            }, function(isConfirm) {
+                if(isConfirm) {
+                    unsafeWindow.location.href = "https://monkeyguts.com/696.user.js";
+                    waitfor(isPageVisible, false, 50, function() {
+                        waitfor(isPageVisible, true, 50,
+                        function() {
+                            swal({
+                                title: "Reloading...",
+                                text: "Please wait until the page reloads itself!",
+                                type: "info",
+                                confirmButtonColor: "#DD6B55",
+                                confirmButtonText: "Ok!"
+                            });
+                            window.location.reload();
+                    	});
+                    });
+                } else {
+            		install_swal(); //Doesn't work, will fix tomorrow.
+                }
+            });
+        } else {
+            install_swal();
+        }
+    }, wait);
 
     if(Scratch.FlashApp.model.attributes.isPublished === false) {
         JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
