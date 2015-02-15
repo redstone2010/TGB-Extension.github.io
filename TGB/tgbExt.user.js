@@ -1642,9 +1642,7 @@ waitfor(SWFready.isResolved, true, 100, function() {
                     	});
                     });
                 } else {
-            		install_swal();
-                    $('.sweet-alert').toggleClass("hideSweetAlert").attr('style', 'margin-top: -185px; display: block;');
-					$('.sweet-overlay').attr('style', 'display:block;');
+            		install_swal(); //Doesn't work, will fix tomorrow.
                 }
             });
         } else {
