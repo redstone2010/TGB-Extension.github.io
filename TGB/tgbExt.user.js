@@ -890,7 +890,7 @@ TGB = {
             ['r', 'Tab Title', 'title'],
             [' ', 'Set Tab Title to %s', 'set_tab', document.title],
             ['b', 'Is this tab visible?', 'tab_visible'],
-            ['r', 'Hash %n', 'hash', '1']
+            ['r', 'Hash %n', 'hash', '1'],
             ['-'],
             ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder"],
             //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
@@ -1030,11 +1030,11 @@ TGB = {
             return document.visibilityState === "visible";
         },
 
-        hash: function(i) {
+        hash: function(index) {
             if (window.location.hash.indexOf('%23') > -1) {
-                return window.location.hash.split('#').split('%23').slice(1)[i-1];
+                return window.location.hash.split('#').split('%23').slice(1)[index - 1];
             } else {
-                return window.location.hash.split('#').slice(1)[i-1];
+                return window.location.hash.split('#').slice(1)[index - 1];
             }
         },
 
