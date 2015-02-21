@@ -893,7 +893,7 @@ TGB = {
             [' ', 'Set Tab Title to %s', 'set_tab', document.title],
             ['b', 'Is this tab visible?', 'tab_visible'],
             ['-'],
-            ['r', 'Hash %n', 'hash', '1'],
+            ['r', 'Custom Hash %n', 'hash', '1'],
             ['r', 'Query Parameter %s', 'php_get', 'allowfullscreen'],
             ['-'],
             ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder"],
