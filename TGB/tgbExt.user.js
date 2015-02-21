@@ -108,8 +108,8 @@ var counters = {Help: Tips},
     Tips = [
         "You can use counters as local variables!",
         "To open Project and Discussion pages you have to use their respective ID's.",
-        "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
-        "Scratch deletes extra hashes when you switch your viewing mode (e.g. Switching to editor mode).",
+        "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!",
+        "Scratch deletes extra hashes when you switch your viewing mode (e.g. Switching to editor mode)."
     ],
     storage;
 
