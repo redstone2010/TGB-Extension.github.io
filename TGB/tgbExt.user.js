@@ -19,6 +19,7 @@
 //               https://cdn.rawgit.com/AndreasSoiron/Color_mixer/master/color_mixer.js
 //               http://www.youtube.com/player_api
 // @match        *://scratch.mit.edu/projects/*
+// @exclude      *://scratch.mit.edu/projects/embed/*
 // A huge thanks to the creators of ScratchExt, some block ideas came from their extension! I found out about Javascript extensions through GrannyCookies, without him this wouldn't be possible :)
 // If you want to check out ScratchExt too: http://www.stefanbates.com/bookmarklet.html
 // ==/UserScript==
@@ -109,6 +110,13 @@ var counters = {Help: Tips},
         "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
     ],
     storage;
+
+/*var inIframe;
+try {
+    inIframe = window.self !== window.top;
+} catch (e) {
+    inIframe = true;
+}*/
 
 waitfor(isDataDefined, true, 100, function() {
     is_creator = data.user.username == data.project.creator;
