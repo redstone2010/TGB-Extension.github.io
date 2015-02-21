@@ -14,6 +14,7 @@
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
 // @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
+// @require      http://tgb-extension.github.io/TGB/Plugins/php-get.js
 //               jQuery Color crashes the script. There will be some cool new Color blocks when I fix it!
 //               http://code.jquery.com/color/jquery.color-2.1.2.min.js
 //               https://cdn.rawgit.com/AndreasSoiron/Color_mixer/master/color_mixer.js
@@ -108,6 +109,7 @@ var counters = {Help: Tips},
         "You can use counters as local variables!",
         "To open Project and Discussion pages you have to use their respective ID's.",
         "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!"
+        "Scratch deletes extra hashes when you switch your viewing mode (e.g. Switching to editor mode).",
     ],
     storage;
 
@@ -890,7 +892,9 @@ TGB = {
             ['r', 'Tab Title', 'title'],
             [' ', 'Set Tab Title to %s', 'set_tab', document.title],
             ['b', 'Is this tab visible?', 'tab_visible'],
+            ['-'],
             ['r', 'Hash %n', 'hash', '1'],
+            ['r', 'Query Parameter %s', 'php_get', 'allowfullscreen'],
             ['-'],
             ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder"],
             //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
@@ -1032,10 +1036,14 @@ TGB = {
 
         hash: function(index) {
             if (window.location.hash.indexOf('%23') > -1) {
-                return window.location.hash.split('#').split('%23').slice(1)[index - 1];
+                return window.location.hash.split('#').join('').split('%23').slice(1)[index - 1];
             } else {
                 return window.location.hash.split('#').slice(1)[index - 1];
             }
+        },
+        
+        php_get: function(param) {
+            return $_GET[param];
         },
 
         TGB_open: function(type, src, callback) {
