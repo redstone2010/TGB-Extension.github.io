@@ -1036,9 +1036,9 @@ TGB = {
 
         hash: function(index) {
             if (window.location.hash.indexOf('%23') > -1) {
-                return window.location.hash.split('#').join('').split('%23').slice(1)[index - 1];
+                return window.location.hash.replace(/(#editor)|(#player)|(#fullscreen)/g, '').split('#').join('').split('%23').slice(1)[index - 1];
             } else {
-                return window.location.hash.split('#').slice(1)[index - 1];
+                return window.location.hash.replace(/(#editor)|(#player)|(#fullscreen)/g, '').split('#').slice(1)[index - 1];
             }
         },
         
