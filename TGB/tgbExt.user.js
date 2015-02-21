@@ -1036,7 +1036,7 @@ TGB = {
             } else {
                 return window.location.hash.split('#').slice(1)[i-1];
             }
-        }
+        },
 
         TGB_open: function(type, src, callback) {
             switch(type) {
