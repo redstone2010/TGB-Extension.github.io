@@ -63,14 +63,14 @@
                 return $container;
             }
 
-            function info(message, title, optionsOverride) {
+            function info(message, title, callback, optionsOverride) {
                 return notify({
                     type: toastType.info,
                     iconClass: getOptions().iconClasses.info,
                     message: message,
                     optionsOverride: optionsOverride,
                     title: title
-                });
+                }, callback);
             }
 
             function subscribe(callback) {
@@ -191,7 +191,7 @@
                 listener(args);
             }
 
-            function notify(map) {
+            function notify(map, callback) {
                 var options = getOptions(),
                     iconClass = map.iconClass || options.iconClass;
 
@@ -285,7 +285,7 @@
                         } else if (event.cancelBubble !== undefined && event.cancelBubble !== true) {
                             event.cancelBubble = true;
                         }
-                        hideToast(true);
+                        hideToast(true, callback);
                     });
                 }
 
@@ -304,8 +304,9 @@
 
                 return $toastElement;
 
-                function hideToast(override) {
+                function hideToast(override, callback) {
                     if ($(':focus', $toastElement).length && !override) {
+                        callback();
                         return;
                     }
                     clearTimeout(progressBar.intervalId);
