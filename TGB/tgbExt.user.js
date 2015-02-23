@@ -12,11 +12,12 @@
 // @resource     version http://tgbsproxy.x10.bz/?version=TGB
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
-// @resource     toastr http://tgbsproxy.x10.bz/?p=TGB/Plugins/toastr.min.css&mime=text/css
+// @resource     toastr http://tgb-extension.github.io/TGB/Plugins/toastr.min.css
 // @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/php-get.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/toastr.js
+// @require      https://cdn.rawgit.com/TheDistantSea/8021359/raw/version_compare.js
 //               jQuery Color crashes the script. There will be some cool new Color blocks when I fix it!
 //               http://code.jquery.com/color/jquery.color-2.1.2.min.js
 //               https://cdn.rawgit.com/AndreasSoiron/Color_mixer/master/color_mixer.js
@@ -1611,10 +1612,11 @@ waitfor(SWFready.isResolved, true, 100, function() {
         }
     } catch(e) {}
 
+    if(versionCompare(GM_info.script.version, GM_getResourceText("version"), {zeroExtend: true}) < 0) {
+        toastr["info"]("A new version is available!<br>    <a href='https://monkeyguts.com/696.user.js'>Click here to update!</a>", "  TGB's Extension " + Number(GM_getResourceText("version")) + "!");
+    }
+    
     setTimeout(function() {
-        if(Number(GM_getResourceText("version")) != GM_info.script.version) {
-            toastr["info"]("A new version is available!<br>    <a href='https://monkeyguts.com/696.user.js'>Click here to update!</a>", "  TGB's Extension " + Number(GM_getResourceText("version")) + "!");
-        }
         swal({
             title: "Load TGB's Extension?",
             text: "If so, wait until the project finishes loading\n and then click on the \"Yes!\" button.",
