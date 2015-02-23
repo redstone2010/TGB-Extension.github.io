@@ -9,12 +9,14 @@
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        unsafeWindow
-// @resource     version http://tgbsproxy.x10.bz/?p=TGB/version&mime=text/plain
+// @resource     version http://tgbsproxy.x10.bz/?version=TGB
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
+// @resource     toastr http://tgbsproxy.x10.bz/?p=TGB/Plugins/toastr.min.css&mime=text/css
 // @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/php-get.js
+// @require      http://tgb-extension.github.io/TGB/Plugins/toastr.js
 //               jQuery Color crashes the script. There will be some cool new Color blocks when I fix it!
 //               http://code.jquery.com/color/jquery.color-2.1.2.min.js
 //               https://cdn.rawgit.com/AndreasSoiron/Color_mixer/master/color_mixer.js
@@ -28,6 +30,7 @@
 
 GM_addStyle(GM_getResourceText("TGBox"));
 GM_addStyle(GM_getResourceText("sweet-alert"));
+GM_addStyle(GM_getResourceText("toastr"));
 
 //Extension Loader////////////////////////////////////////////////////////////////////////////
 function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _msg /* String */, _status /* Number */) {
@@ -144,6 +147,26 @@ commentAddition = [
     "Please use my profile to make requests! Thanks :)",
     "Thanks for commenting! :)"
 ];
+
+//Toastr Configuration////////////////////////////////////////////////////////////////////////
+
+toastr.options = {
+    "closeButton": false,
+    "debug": false,
+    "newestOnTop": false,
+    "progressBar": true,
+    "positionClass": "toast-bottom-right",
+    "preventDuplicates": true,
+    "onclick": null,
+    "showDuration": "10000",
+    "hideDuration": "10000",
+    "timeOut": "20000",
+    "extendedTimeOut": "10000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+}
 
 //Checking if user is a New Scratcher/////////////////////////////////////////////////////////
 
@@ -1565,58 +1588,6 @@ TGB.Sensing.onInstall = function() {
 };
 
 //Run the extensions//////////////////////////////////////////////////////////////////////////
-install_swal = function() {
-    swal({
-        title: "Load TGB's Extension?",
-        text: "If so, wait until the project finishes loading\n and then click on the \"Yes!\" button.",
-        type: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#DD6B55",
-        confirmButtonText: "Yes!",
-        cancelButtonText: 'No! :(',
-        closeOnConfirm: true
-    }, function(isConfirmed) {
-        if(isConfirmed) {
-            swal({
-                title: "Loading...",
-                text: "Loading TGB's Extensions",
-                type: "info",
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "Ok!",
-            });
-            setTimeout(function() {
-                console.log('Loading Extensions...');
-                try {
-                    if(extensionSpecified) {
-                        for(var i in chosenExtensions) {
-                            if (chosenExtensions.hasOwnProperty(i)) {
-                                console.log('Installing extension ' + chosenExtensions[i]);
-                                TGB[chosenExtensions[i]].install();
-                            }
-                        }
-                    } else {
-                        for(var ext in extensions) {
-                            if (extensions.hasOwnProperty(ext)) {
-                                console.log('Installing extension ' + extensions[ext]);
-                                TGB[extensions[ext]].install();
-                            }
-                        }
-                    }
-                } catch(e) {
-                    for(var i in extensions) {
-                        if (extensions.hasOwnProperty(i)) {
-                            console.log('Installing extension ' + extensions[i]);
-                            TGB[extensions[i]].install();
-                        }
-                    }
-                }
-                console.log('Extensions loaded!');
-                swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1000, type: "success"});
-            }, 50);
-        }
-    });
-};
-
 waitfor(SWFready.isResolved, true, 100, function() {
     extensions = Object.getOwnPropertyNames(TGB).sort();
     if(typeof is_creator !== "undefined" && !is_creator) {
@@ -1642,37 +1613,58 @@ waitfor(SWFready.isResolved, true, 100, function() {
 
     setTimeout(function() {
         if(Number(GM_getResourceText("version")) != GM_info.script.version) {
-            swal({
-                title: "v" + Number(GM_getResourceText("version")) + " Available!",
-                text: "To update, click the \"Yes!\" button and click on the \"reinstall\" button that will appear in the next page!",
-                type: "info",
-                showCancelButton: true,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "Yes!",
-                cancelButtonText: 'No!'
-            }, function(isConfirm) {
-                if(isConfirm) {
-                    unsafeWindow.location.href = "https://monkeyguts.com/696.user.js";
-                    waitfor(isPageVisible, false, 50, function() {
-                        waitfor(isPageVisible, true, 50,
-                        function() {
-                            swal({
-                                title: "Reloading...",
-                                text: "Please wait until the page reloads itself!",
-                                type: "info",
-                                confirmButtonColor: "#DD6B55",
-                                confirmButtonText: "Ok!"
-                            });
-                            window.location.reload();
-                    	});
-                    });
-                } else {
-            		install_swal(); //Doesn't work, will fix tomorrow.
-                }
-            });
-        } else {
-            install_swal();
+            toastr["info"]("A new version is available!<br>    <a href='https://monkeyguts.com/696.user.js'>Click here to update!</a>", "  TGB's Extension " + Number(GM_getResourceText("version")) + "!");
         }
+        swal({
+            title: "Load TGB's Extension?",
+            text: "If so, wait until the project finishes loading\n and then click on the \"Yes!\" button.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "Yes!",
+            cancelButtonText: 'No! :(',
+            closeOnConfirm: false
+        }, function(isConfirmed) {
+            if(isConfirmed) {
+                swal({
+                    title: "Loading...",
+                    text: "Loading TGB's Extensions",
+                    type: "info",
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Ok!",
+                    closeOnConfirm: false
+                });
+                setTimeout(function() {
+                    console.log('Loading Extensions...');
+                    try {
+                        if(extensionSpecified) {
+                            for(var i in chosenExtensions) {
+                                if (chosenExtensions.hasOwnProperty(i)) {
+                                    console.log('Installing extension ' + chosenExtensions[i]);
+                                    TGB[chosenExtensions[i]].install();
+                                }
+                            }
+                        } else {
+                            for(var ext in extensions) {
+                                if (extensions.hasOwnProperty(ext)) {
+                                    console.log('Installing extension ' + extensions[ext]);
+                                    TGB[extensions[ext]].install();
+                                }
+                            }
+                        }
+                    } catch(e) {
+                        for(var i in extensions) {
+                            if (extensions.hasOwnProperty(i)) {
+                                console.log('Installing extension ' + extensions[i]);
+                                TGB[extensions[i]].install();
+                            }
+                        }
+                    }
+                    console.log('Extensions loaded!');
+                    swal({title: "Yay!", text: "The extension was successfully installed!", timer: 3000, type: "success"});
+                }, 50);
+            }
+        });
     }, wait);
 
     if(Scratch.FlashApp.model.attributes.isPublished === false) {
