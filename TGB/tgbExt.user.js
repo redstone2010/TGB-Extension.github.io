@@ -8,8 +8,8 @@
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
+// @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
-// @resource     version http://tgbsproxy.x10.bz/?version=TGB
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
 // @resource     toastr http://tgb-extension.github.io/TGB/Plugins/toastr.min.css
@@ -94,9 +94,41 @@ function isPageVisible() {
     return document.visibilityState === "visible";
 }
 
+//Toastr Configuration////////////////////////////////////////////////////////////////////////
+
+toastr.options = {
+    "closeButton": false,
+    "debug": false,
+    "newestOnTop": false,
+    "progressBar": true,
+    "positionClass": "toast-bottom-right",
+    "preventDuplicates": true,
+    "onclick": null,
+    "showDuration": "10000",
+    "hideDuration": "10000",
+    "timeOut": "20000",
+    "extendedTimeOut": "10000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+}
+
 //Variables///////////////////////////////////////////////////////////////////////////////////
 var TGB = {},
     wait = 2.5;
+
+GM_xmlhttpRequest({ //Get Latest version from MonkeyGuts
+  method: "GET",
+  url: "https://monkeyguts.com/code.php?id=696",
+  onload: function(response) {
+      var version = $(response.responseText).find('.codeVersion > span:eq(1)').html();
+  
+      if(versionCompare(GM_info.script.version, version, {zeroExtend: true}) < 0) {
+          toastr["info"]("A new version is available!<br>    <a href='https://monkeyguts.com/696.user.js'>Click here to update!</a>", "  TGB's Extension " + version + "!");
+      }
+  }
+});
 
 var scratcher,
     userLanguage = window.navigator.language; //Check for the userLanguage prop. also in case IE needs support.
@@ -148,26 +180,6 @@ commentAddition = [
     "Please use my profile to make requests! Thanks :)",
     "Thanks for commenting! :)"
 ];
-
-//Toastr Configuration////////////////////////////////////////////////////////////////////////
-
-toastr.options = {
-    "closeButton": false,
-    "debug": false,
-    "newestOnTop": false,
-    "progressBar": true,
-    "positionClass": "toast-bottom-right",
-    "preventDuplicates": true,
-    "onclick": null,
-    "showDuration": "10000",
-    "hideDuration": "10000",
-    "timeOut": "20000",
-    "extendedTimeOut": "10000",
-    "showEasing": "swing",
-    "hideEasing": "linear",
-    "showMethod": "fadeIn",
-    "hideMethod": "fadeOut"
-}
 
 //Checking if user is a New Scratcher/////////////////////////////////////////////////////////
 
@@ -1611,10 +1623,6 @@ waitfor(SWFready.isResolved, true, 100, function() {
             }
         }
     } catch(e) {}
-
-    if(versionCompare(GM_info.script.version, GM_getResourceText("version"), {zeroExtend: true}) < 0) {
-        toastr["info"]("A new version is available!<br>    <a href='https://monkeyguts.com/696.user.js'>Click here to update!</a>", "  TGB's Extension " + Number(GM_getResourceText("version")) + "!");
-    }
     
     setTimeout(function() {
         swal({
@@ -1663,7 +1671,7 @@ waitfor(SWFready.isResolved, true, 100, function() {
                         }
                     }
                     console.log('Extensions loaded!');
-                    swal({title: "Yay!", text: "The extension was successfully installed!", timer: 3000, type: "success"});
+                    swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1500, type: "success"});
                 }, 50);
             }
         });
