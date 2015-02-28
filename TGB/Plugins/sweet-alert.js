@@ -768,4 +768,4 @@
 	  }
   })();
 
-})(unsafeWindow, document);
+})(window, document);
