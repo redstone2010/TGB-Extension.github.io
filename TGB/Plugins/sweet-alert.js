@@ -145,7 +145,7 @@
       if (MouseEvent) {
         // Up-to-date approach
 		var mevt = new MouseEvent('click', {
-		  view: unsafeWindow,
+		  view: window,
 		  bubbles: false,
 		  cancelable: true
 		});
@@ -768,4 +768,4 @@
 	  }
   })();
 
-})(window, document);
+})(unsafeWindow, document);
