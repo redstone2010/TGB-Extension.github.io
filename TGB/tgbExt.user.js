@@ -37,7 +37,7 @@ GM_addStyle(GM_getResourceText("sweet-alert"));
 GM_addStyle(GM_getResourceText("toastr"));
 
 //Extension Loader////////////////////////////////////////////////////////////////////////////
-var notRandomExt = ["Color", "Program & Web", "Strings", "UI"], //Extensions that shouldn't be randomized (Color is there because it is randomized manually)
+var notRandomExt = ["Color", "Gamepad", "Program & Web", "Strings", "UI"], //Extensions that shouldn't be randomized (Color is there because it is randomized manually)
     everyBlock = [];
 
 function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _msg /* String */, _status /* Number */) {
