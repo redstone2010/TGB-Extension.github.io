@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      1.3
+// @version      2.0
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -8,12 +8,11 @@
 // @grant        GM_setClipboard
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
+// @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
-// @resource     version http://tgbsproxy.x10.bz/?version=TGB
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
 // @resource     toastr http://tgb-extension.github.io/TGB/Plugins/toastr.min.css
-// @require      http://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/php-get.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/toastr.js
@@ -27,6 +26,10 @@
 // A huge thanks to the creators of ScratchExt, some block ideas came from their extension! I found out about Javascript extensions through GrannyCookies, without him this wouldn't be possible :)
 // If you want to check out ScratchExt too: http://www.stefanbates.com/bookmarklet.html
 // ==/UserScript==
+//Plugins/////////////////////////////////////////////////////////////////////////////////////
+
+$.getScript("https://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js");
+
 //CSS ////////////////////////////////////////////////////////////////////////////////////////
 
 GM_addStyle(GM_getResourceText("TGBox"));
@@ -34,10 +37,14 @@ GM_addStyle(GM_getResourceText("sweet-alert"));
 GM_addStyle(GM_getResourceText("toastr"));
 
 //Extension Loader////////////////////////////////////////////////////////////////////////////
+var notRandomExt = ["Color", "Program & Web", "Strings", "UI"], //Extensions that shouldn't be randomized (Color is there because it is randomized manually)
+    everyBlock = [];
+
 function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _msg /* String */, _status /* Number */) {
     this.functions = _functions || {};
     this.functions._shutdown = function() {};
     this.functions._getStatus = function() {
+        
         // Status reporting code
         // Use this to report missing hardware, plugin or unsupported browser
         return {
@@ -46,19 +53,58 @@ function Extension(name /* String */, _descriptor /* Object */, _functions /* Ob
         };
     };
 
+    this.name = name;
+    this.descriptor = _descriptor;
+
+    this.hasMenu = typeof this.descriptor.menus !== 'undefined';
+
+    //TODO: Use a special char to impede it from being randomized.
+    this.descriptor.blocks.forEach(function(val) { //Randomize default options of menu inputs and push blocks to the everyBlock array
+        everyBlock.push(val);
+
+        if(this.hasMenu) { //Proceed if the extension has a menu
+            if(this.name == "Data") {
+                console.log('aaaaaaaa');
+            }
+            if(val[0] !== '-' && notRandomExt.indexOf(this.name) === -1) { //Proceed if the array means a space between the blocks and isn't one of the extensions in notRandomExt
+                var menus = val[1].match(/%m\.(\w+)/g) || []; //If match() returns null we set menus to [], that allows us to use the length property
+                
+                if(menus.length > 0) { //Proceed if the block uses inputs from a menu
+                    var usedMenus = menus.join("").split("%m.").slice(1), //Remove %m. from the menu names
+                        everyInput = val[1].match(/%n|%s|%c|(%m\.(\w+))/g), //This regex helps us find out every input the block has 
+                        eLength = everyInput.length; //This is to optimize the loop as it would have to check for the length of val every iteration
+                    
+                    for(var n = 0; n < eLength; n++) { //Iterate over every block input
+                        var menusIndex = menus.indexOf(everyInput[n]); //Find out if input n is a menu and it's index inside the menus array
+                        
+                        if(menusIndex > -1) { //Proceed if input n is a menu
+                            val[n + 3] = math.pickRandom(this.descriptor.menus[usedMenus[menusIndex]]); //Set the default to a random menu option
+                        }
+                    }
+                }
+            }
+        }
+    }, this);
+
     this.install = function() {
         //Execute a function when the extension is installed
         try {
             this.onInstall();
         } catch (e) {}
         //Install Extension
-        ScratchExtensions.register(name, _descriptor /* Objects: blocks, menus, url */, this.functions);
+        ScratchExtensions.register(name, this.descriptor /* Objects: blocks, menus, url */, this.functions);
     };
 }
 
 //Welcome easter egg!/////////////////////////////////////////////////////////////////////////
 
-console.log("                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ");
+function log_load(bool) {
+    console.log("%c                                                                                      \n                                                                                      \n.---.--..--. .       .-.           .     .      .---.     .                           \n  |:    |   \)|      \(   \)         _|_    |      |        _|_               o          \n  || --.|--:  .--.   `-. .-.--.-.  |  .-.|--.   |--- -. ,-|  .-..--. .--.  .  .-..--. \n  |:   ||   \) `--.  \(   |  | \(   \) | \(   |  |   |      :  | \(.-'|  | `--.  | \(   \)  | \n  ' `--''--'  `--'   `-' `-'  `-'`-`-'`-''  `-  '---'-' `-`-'`--'  `-`--'-' `-`-''  `-\n                                                                                      \n                                                                                      ", 'color:#34495e');
+    if(bool) {
+    	console.log('%cLoading Extensions...', 'color:#34495e');
+    }
+}
+log_load(false);
 
 //Wait for a condition to be true/////////////////////////////////////////////////////////////
 
@@ -90,64 +136,17 @@ function isScratchDefined() {
     }
 }
 
+function isFlashAppDefined() {
+    try {
+        return Scratch.FlashApp !== undefined;
+    } catch(e) {
+        return false;
+    }
+}
+
 function isPageVisible() {
     return document.visibilityState === "visible";
 }
-
-//Variables///////////////////////////////////////////////////////////////////////////////////
-var TGB = {},
-    wait = 2.5;
-
-var scratcher,
-    userLanguage = window.navigator.language; //Check for the userLanguage prop. also in case IE needs support.
-    //online; Activate for Firefox version
-
-var keysPressed = [],
-    keyDetection = false,
-    last_h_value = false;
-
-var lang = "Google US English";
-
-var counters = {Help: Tips},
-    Tips = [
-        "You can use counters as local variables!",
-        "To open Project and Discussion pages you have to use their respective ID's.",
-        "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!",
-        "Scratch deletes extra hashes when you switch your viewing mode (e.g. Switching to editor mode)."
-    ],
-    storage;
-
-/*var inIframe;
-try {
-    inIframe = window.self !== window.top;
-} catch (e) {
-    inIframe = true;
-}*/
-
-waitfor(isDataDefined, true, 100, function() {
-    is_creator = data.user.username == data.project.creator;
-    shared = !data.project.isPrivate;
-    project_id = data.project.id;
-    remixed = data.project.parentId !== null;
-});
-
-waitfor(isScratchDefined, true, 100, function() {
-    admin = Scratch.INIT_DATA.ADMIN;
-    notes = Scratch.INIT_DATA.PROJECT.model.notes;
-
-    // Semi-fix for sharing projects with extensions!
-    Scratch.Project.ShareBar.prototype.shareProject = function() {
-        this.model.share();
-    };
-});
-
-commentAddition = [
-    "Please read the instructions before commenting! Thanks :)",
-    "Please use the forum to post your scores!",
-    "Feel free to make your requests here!",
-    "Please use my profile to make requests! Thanks :)",
-    "Thanks for commenting! :)"
-];
 
 //Toastr Configuration////////////////////////////////////////////////////////////////////////
 
@@ -167,11 +166,113 @@ toastr.options = {
     "hideEasing": "linear",
     "showMethod": "fadeIn",
     "hideMethod": "fadeOut"
-}
+};
+
+//Warn the user about new updates!////////////////////////////////////////////////////////////
+$.get("https://TGB-Extension.github.io/TGB/ScriptVersion", function(version){
+    if(versionCompare(GM_info.script.version, version.trim(), {zeroExtend: true}) < 0) {
+        toastr["info"]("A new version is available!<br>    <a href='https://github.com/TGB-Extension/TGB-Extension.github.io/raw/master/TGB/tgbExt.user.js'>Click here to update!</a>", "  TGB's Extension " + version.trim() + "!");
+    }
+});
+
+//Variables///////////////////////////////////////////////////////////////////////////////////
+var TGB = {},
+    wait = 2.5,
+    isInstalled = false;
+
+var lang = "Google US English";
+
+var project_modified = {last_call: Date.now() - 300000}, //Allows us to check that project_modified wasn't completely defined yet later on
+    comments_amount = -1;
+
+var keysPressed = [],
+    keyDetection = false,
+    last_h_value = false;
+
+var scratcher,
+    userLanguage = window.navigator.language; //Check for the userLanguage prop. also in case IE needs support.
+    //online; Activate for Firefox version
+
+var Tips = [
+        "You can use counters as local variables!",
+        "To open Project and Discussion pages you have to use their respective ID's.",
+        "You can use the # of word [] in [] block among with the list reporter to find the index of an item (the items of the list can't have spaces)!",
+        "Scratch deletes extra hashes when you switch your viewing mode (e.g. Switching to editor mode).",
+        "Blocks that switch to Fullscreen mode do not work while inside the editor."
+    ],
+    counters = {Help: Tips},
+    storage;
+
+var hatFix = [false, false]; //Auto-reset Gamepad hats
+
+
+var gamepadSupport = (!!navigator.getGamepads ||
+                      !!navigator.gamepads);
+var gamepad = null;
+
+var DEADZONE = 8000 / 32767;
+
+var buttons = [
+    "A",
+    "B",
+    "X",
+    "Y",
+    "left button",
+    "right button",
+    "left trigger",
+    "right trigger",
+    "select",
+    "start",
+    "left stick",
+    "right stick",
+    "up",
+    "down",
+    "left",
+    "right"
+];
+
+var buttonMenu = [];
+var buttonNames = {};
+
+var stickDirection = {left: 180, right: 180};
+
+/*var inIframe;
+try {
+    inIframe = window.self !== window.top;
+} catch (e) {
+    inIframe = true;
+}*/
+
+waitfor(isDataDefined, true, 100, function() {
+    is_creator = data.user.username == data.project.creator;
+    shared = !data.project.isPrivate;
+    project_id = data.project.id;
+    remixed = data.project.parentId !== null;
+
+    // Semi-fix for sharing projects with extensions!
+    if(is_creator) {
+        Scratch.Project.ShareBar.prototype.shareProject = function() {
+            this.model.share();
+        };
+    }
+});
+
+waitfor(isScratchDefined, true, 100, function() {
+    admin = Scratch.INIT_DATA.ADMIN;
+    notes = Scratch.INIT_DATA.PROJECT.model.notes;
+});
+
+commentAddition = [
+    "Please read the instructions before commenting! Thanks :)",
+    "Please use the forum to post your scores!",
+    "Feel free to make your requests here!",
+    "Please use my profile to make requests! Thanks :)",
+    "Thanks for commenting! :)"
+];
 
 //Checking if user is a New Scratcher/////////////////////////////////////////////////////////
 
-$.get( "http://scratch.mit.edu/internalapi/swf-settings/", function(data) {
+$.get("https://scratch.mit.edu/internalapi/swf-settings/", function(data) {
     scratcher = JSON.parse(data);
     scratcher = scratcher.user_groups.indexOf('Scratchers') > -1;
 });
@@ -202,7 +303,7 @@ try {
     fail = storage.getItem(uid) != uid;
     storage.removeItem(uid);
     fail && (storage = false);
-    storage['!Cookie'] = 1; //Just a little Easter Egg, there's no need to set it to 1 again after resetting :p
+
 } catch (exception) {}
 
 //List Voices/////////////////////////////////////////////////////////////////////////////////
@@ -412,10 +513,6 @@ function onPlayerStateChange(event) {
     }
 }*/
 
-//Reports the wait to user////////////////////////////////////////////////////////////////////
-
-console.log('Waiting ' + wait + ' secs...');
-
 //Extensions//////////////////////////////////////////////////////////////////////////////////
 //TODO: Include pages to explain each Extension.
 
@@ -423,19 +520,19 @@ TGB = {
     Color: new Extension(
     "Color",
     {
-        blocks: [
-            ['r', '%c', 'color', math.pickRandom([255, 65280, 16711680])],
-            ['-'],
-            //['r', 'mix %c and %c', 'mix'],
-            ['r', 'Hex%s to color', 'hex2color', '#ffffff'],
-            ['r', 'R:%s G:%s B:%s', 'rgb2color', 255, 255, 255],
-            ['-'],
-            ['r', '%m.rgb of %c', 'color2rgb', 'Red'],
-        ],
-
         menus: {
             rgb: ["Red", "Green", "Blue"],
         },
+
+        blocks: [
+          ['r', '%c', 'color', math.pickRandom([255, 65280, 16711680])],
+          ['-'],
+          //['r', 'mix %c and %c', 'mix'],
+          ['r', 'Hex%s to color', 'hex2color', '#ffffff'],
+          ['r', 'R:%s G:%s B:%s', 'rgb2color', 255, 255, 255],
+          ['-'],
+          ['r', '%m.rgb of %c', 'color2rgb', 'Red'],
+        ]
     },
     {
         color: function(integer) {return integer;},
@@ -515,7 +612,7 @@ TGB = {
 
         cookie: function(name) {
             if (storage) {
-                return storage[name];
+                return JSON.parse(localStorage['TGB-cookies'])[project_id][name];
             }
         },
 
@@ -564,14 +661,20 @@ TGB = {
 
         s_cookie: function(name, val) {
             if(storage) {
-                if(storage.length <= 500) {
+                if(JSON.stringify(storage).length < 1500000) {
                     /*if(typeof is_creator !== "undefined" && is_creator) {
                         console.log("Cookie '" + name + "' set to '" + val + "'.");
                     }*/
-                    storage.setItem(name, val);
+                	var cookies = JSON.parse(localStorage['TGB-cookies']);
+                    if(typeof cookies[project_id] === 'undefined') {
+                        cookies[project_id] = {};
+                    }
+                    cookies[project_id][name] = val;
+                    
+                	storage.setItem('TGB-cookies', JSON.stringify(cookies));
                 } else {
                     if(typeof is_creator !== "undefined" && is_creator) {
-                        console.log("Too many cookies.");
+                        console.log("Your cookies are occuppying too much space on the disk, they're not being saved anymore.");
                     }
                 }
             }
@@ -579,22 +682,31 @@ TGB = {
 
         i_cookie: function(name, val) {
             if(storage) {
-                if(storage.length <= 500) {
+                if(JSON.stringify(storage).length < 1500000) {
                     /*if(typeof is_creator !== "undefined" && is_creator) {
                         console.log("Cookie '" + name + "' increased by '" + val + "'.");
                     }*/
-                    if(typeof storage[name] != "undefined") {
-                        if(isNaN(val) || isNaN(storage[name])) {
-                            storage[name] += val;
+                    var cookies = JSON.parse(localStorage['TGB-cookies']),
+                    	cookie = cookies[project_id];
+
+                    if(typeof cookies[project_id] === "undefined") {
+                        cookies[project_id] = {};
+                        cookie = cookies[project_id];
+                    } 
+                    if(typeof cookie[name] !== "undefined") {
+                        if(isNaN(val) || isNaN(cookie[name])) {
+                            cookie[name] += val;
                         } else {
-                            storage[name] = Number(storage[name]) + Number(val);
+                            cookie[name] = Number(cookie[name]) + Number(val);
                         }
                     } else {
-                        storage.setItem(name, val);
+                        console.log(cookie);
+                        cookies[project_id][name] = val;
                     }
+                    storage.setItem('TGB-cookies', JSON.stringify(cookies));
                 }
                 else if(typeof is_creator !== "undefined" && is_creator) {
-                    console.log("Too many cookies.");
+                    console.log("Your cookies are occuppying too much space on the disk, they're not being saved anymore.");
                 }
             }
         },
@@ -604,7 +716,10 @@ TGB = {
                 /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Cookie '" + name + "' was deleted.");
                 }*/
-                storage.removeItem(name);
+                var cookies = JSON.parse(localStorage['TGB-cookies']);
+                delete cookies[project_id][name];
+
+                storage.setItem('TGB-cookies', JSON.stringify(cookies));
             }
         },
 
@@ -613,7 +728,10 @@ TGB = {
                 /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("All cookies were deleted.");
                 }*/
-                storage.clear();
+                var cookies = JSON.parse(localStorage['TGB-cookies']);
+                delete cookies[project_id];
+
+                storage.setItem('TGB-cookies', JSON.stringify(cookies));
             }
         }
     }),
@@ -645,7 +763,7 @@ TGB = {
             case "Date":
                 return d.getUTCDate();
             case "Month":
-                return d.getUTCMonth();
+                return d.getUTCMonth()+1;
             case "Year":
                 return d.getUTCFullYear();
             case "Day of the Week":
@@ -680,6 +798,69 @@ TGB = {
             return d.getTimezoneOffset();
         }
     }),
+
+    Gamepad: new Extension(
+    "zGamepad",
+    {
+        blocks: [
+		  ["h", "when button %m.button is pressed", "hatButton", "A"],
+		  ["h", "when %m.stick stick points at any direction", "hatStick", "left"],
+		  ["-"],
+		  ["b", "button %m.button pressed?", "getButton", "A"],
+		  ["r", "% pressed of %m.stick trigger", "getTrigger", "left"],
+		  ["r", "%m.axisValue of %m.stick stick", "getStick", "direction", "left"],
+		  ["-"],
+		  ["r", "Which button is pressed?", "whichButton"]
+        ],
+		menus: {
+		  button: buttonMenu,
+		  stick: ["left", "right"],
+		  axisValue: ["direction", "force"],
+		},
+    },
+    {
+        hatButton: function(name) {
+			if(!hatFix[0] && getButton(name) === true) {
+				hatFix[0] = true;
+				return true;
+			} else {
+				hatFix[0] = false;
+				return false;
+			}
+		},
+
+        hatStick: function(stick) {
+			if(!hatFix[1] && ext.getStick("direction", stick) != "false") {
+				hatFix[1] = true;
+				return true;
+			} else {
+				hatFix[1] = false;
+				return false;
+			}
+		},
+		
+		getButton: function(name) {
+			return getButton(name);
+		},
+		
+		getTrigger: function(which) {
+			which = (which == "left") ? 6 : 7;
+			return gamepad.buttons[which].value;
+		},
+		
+		getStick: function(what, stick) {
+			return getStick(what, stick);
+		},
+		
+		whichButton: function() {
+			var result = buttons[gamepad.buttons.map(function(e) {return e.pressed;}).indexOf(true)];
+			if(typeof result == "undefined") {
+			  result = -1;
+			}
+			return result;
+		}
+    }, (!gamepadSupport) ? "Please use a recent version of Google Chrome" : ((!gamepad) ? "Please plug in a gamepad and press any button" : "Good to go!"), (!gamepadSupport) ? 1 : ((!gamepad) ? 1 : 2)),
+    //Unfortunately, the status of the Gamepad extension isn't updating, and I don't have time to fix it for now.
 
     Operators: new Extension(
     "Operators",
@@ -897,14 +1078,14 @@ TGB = {
             ['r', 'Project ID', 'proj_id'],
             ['r', 'Instructions', 'info'],
             ['r', 'Notes and Credits', 'notes'],
-            //['r', 'Days since last update', 'lst_upd', ''],
+            ['R', 'Days since last update', 'lst_upd'],
             ['-'],
             ['b', 'Shared?', 'shared'],
             ['b', 'Remix?', 'remixed'],
             ['-'],
             ['r', 'Amount of Sprites', 'sprites'],
             ['r', 'Amount of Scripts', 'scripts'],
-            ['r', 'Amount of Comments', 'comments', ''],
+            ['R', 'Amount of Comments', 'comments'],
             ['-'],
             ['r', 'View Mode', 'mode'],
             [' ', 'Switch to %m.views mode', 'switch_to', 'Player'],
@@ -955,9 +1136,21 @@ TGB = {
             return notes;
         },
 
-        /*lst_upd: function() {
-
-        },*/
+        lst_upd: function(callback) {
+            var GMT_time = Date.now();
+            if(GMT_time - project_modified.last_call > 300000) { //Display a cached value if last AJAX call was less than 5 minutes ago.
+                $.get("", function(data) {
+                    var modifiedDate = $(data).filter("script:eq(7)").html().match(/modifiedDate: .+,/)[0].match(/'.+'/)[0];
+                    modifiedDate = modifiedDate.substr(1, modifiedDate.length - 2).replace(/\\u002D/g, "-");
+                    
+                    project_modified = {date: new Date(modifiedDate), last_call: new Date};
+    
+                    callback((GMT_time + new Date().getTimezoneOffset() * 60 * 1000 - Date.parse(project_modified.date)) / (1000 * 60 * 60 * 24));
+                });
+            } else {
+                callback((GMT_time + new Date().getTimezoneOffset() * 60 * 1000 - Date.parse(project_modified.date)) / (1000 * 60 * 60 * 24));
+            }
+        },
 
         shared: function() {
             return shared;
@@ -975,9 +1168,22 @@ TGB = {
             return $("#script-count").html();
         },
 
-        comments: function() {
-            n = $("h4:contains('Comments')").html();
-            return n.substring(n.lastIndexOf("(")+1,n.lastIndexOf(")"));
+        comments: function(callback) {
+            if(comments_amount == -1) {
+                var n = $("#comment-count").html();
+                
+                if(n == "") { //NOTE: This piece of code does not update the amount of comments, it only downloads it once.
+                    $.get("https://scratch.mit.edu/site-api/comments/project/" + project_id + "/", function(data) {
+                        comments_amount = $(data).filter("span").data().controlCommentCount;
+                        callback(comments_amount);
+                    });
+                } else {
+                    comments_amount = n.substring(n.lastIndexOf("(")+1,n.lastIndexOf(")"));
+                    callback(comments_amount);
+                }
+            } else {
+                callback(comments_amount);
+            }
         },
 
         mode: function() {
@@ -1059,15 +1265,20 @@ TGB = {
         },
 
         hash: function(index) {
-            if (window.location.hash.indexOf('%23') > -1) {
-                return window.location.hash.replace(/(#editor)|(#player)|(#fullscreen)/g, '').split('#').join('').split('%23').slice(1)[index - 1];
+            var custom_hashes = window.location.hash.replace(/(#editor)|(#player)|(#fullscreen)/g, '').split('#').join('').split('%23')[index - 1];
+            if(typeof custom_hashes != 'undefined') {
+                return custom_hashes;
             } else {
-                return window.location.hash.replace(/(#editor)|(#player)|(#fullscreen)/g, '').split('#').slice(1)[index - 1];
+                return '';
             }
         },
         
         php_get: function(param) {
-            return $_GET[param];
+            if(typeof $_GET[param] != 'undefined') {
+                return $_GET[param];
+            } else {
+                return '';
+            }
         },
 
         TGB_open: function(type, src, callback) {
@@ -1191,7 +1402,7 @@ TGB = {
             [' ', 'Set voice to %n', 'set_voice'],
             ['-'],
             [' ', 'Speak %s', 'speak_text', 'You are ' + ((typeof data !== "undefined") ? data.user.username : "a visitor")],
-            ['w', 'Speak %s and wait', 'speak_wait', 'You are a ' + (scratcher ? 'Scratcher' : 'New Scratcher')],
+            ['w', 'Speak %s and wait', 'speak_wait', 'You are a ' + (!scratcher ? 'Scratcher' : 'New Scratcher')],
             ['-'],
             [' ', 'Pause speech', 'pause_voice'],
             [' ', 'Resume speech', 'resume_voice'],
@@ -1531,7 +1742,7 @@ TGB = {
     },
     {
         get_lang: function() {
-            return getCookie("scratchlanguage");
+            return getCookie("scratchlanguage"); //There is a cookie called scratch language in the cdn.scratch.mit.edu domain also, it is much more accurate. Tell me if you know how to grab it through the code :D
         },
 
         get_browser_lang: function() {
@@ -1571,6 +1782,28 @@ TGB = {
     })
 };
 
+//Set special random values to block parameter defaults///////////////////////////////////////
+
+(function() { //Create a scope for it
+    var color_desc = TGB.Color.descriptor,
+        date_desc = TGB.Date.descriptor;
+        
+    var rand_color_1 = math.randomInt(0,2);
+        
+    color_desc.blocks[5][3] = color_desc.menus.rgb[rand_color_1];
+    color_desc.blocks[5][4] = [16711680, 65280, 255][rand_color_1];
+})();
+
+//Set functions to run on script installation/////////////////////////////////////////////////
+
+TGB.Data.onInstall = function() {
+    if(storage) {
+        if(typeof storage['TGB-cookies'] === 'undefined') {
+            storage['TGB-cookies'] = '{}';
+        }
+    }
+};
+
 TGB.Sensing.onInstall = function() {
     if(keyDetection === false) {
         $(document).on("keyup keydown", function(e) {
@@ -1588,11 +1821,123 @@ TGB.Sensing.onInstall = function() {
     }
 };
 
+TGB.Gamepad.onInstall = function() {
+    buttons.forEach(function(name, i) {
+        buttonMenu.push(name);
+        buttonNames[name] = i;
+    });
+
+    buttonMenu.splice(8, 0, "left trigger (100%)");
+    buttonMenu.splice(9, 0, "right trigger (100%)");
+    buttonMenu.push("any", "any (100%)");
+
+    tick = function() {
+        gamepad = (navigator.getGamepads &&
+                   navigator.getGamepads()[0]);
+        window.requestAnimationFrame(tick);
+    };
+    if (gamepadSupport) window.requestAnimationFrame(tick);
+
+    getButton = function(name) {
+        if(name == "left trigger (100%)") {
+            return gamepad.buttons[6].value == 1;
+        }
+        if(name == "right trigger (100%)") {
+            return gamepad.buttons[7].value == 1;
+        }
+        if(name.indexOf("any") == -1) {
+            var index = buttonNames[name];
+            var button = gamepad.buttons[index];
+            return button.pressed;
+        } else {
+            if(name == "any") {
+                return gamepad.buttons.map(function(e) { return e.pressed; }).indexOf(true) > -1;
+            } else {
+                return gamepad.buttons.map(function(e) { return e.value; }).indexOf(1) > -1;
+            }
+        }
+    };
+    
+    getStick = function(what, stick) {
+        var x, y;
+        switch (stick) {
+            case "left":  x = gamepad.axes[0]; y = -gamepad.axes[1]; break;
+            case "right": x = gamepad.axes[2]; y = -gamepad.axes[3]; break;
+        }
+        if (-DEADZONE < x && x < DEADZONE) x = 0;
+        if (-DEADZONE < y && y < DEADZONE) y = 0;
+
+        switch (what) {
+            case "direction":
+                if (x === 0 && y === 0) {
+                    // report false to indicate that the stick isn't pointing to any 2D direction
+                    return "false";
+                }
+                var value = 180 * Math.atan2(x, y) / Math.PI + 90;
+                stickDirection[stick] = value;
+                return value;
+            case "force":
+                return Math.sqrt(x*x + y*y);
+        }
+    };
+};
+
 //Run the extensions//////////////////////////////////////////////////////////////////////////
-waitfor(SWFready.isResolved, true, 100, function() {
+
+function install_all() {
+    var blocksInstalled = 0;
+    
+    extensions.forEach(function(val) {
+        blocksInstalled += TGB[val].descriptor.blocks.length;
+        //console.clear();
+        //log_load(true);
+        console.log('%cInstalling extension %c' + val + '%c [' + math.round(blocksInstalled * 100 / everyBlock.length, 1) + '%]', 'color:#34495e', 'color:#e67e22', 'color:#3498db');
+        TGB[val].install();
+    });
+}
+
+function load() {
+    setTimeout(function() {
+        if(!isInstalled) {
+            var install_init_date = new Date;
+            console.log('%cLoading Extensions...', 'color:#34495e');
+
+            try {
+                if(extensionSpecified) {
+                    var chosenBlocksInstalled = 0,
+                        everyChosenBlock = 0;
+                    
+                    chosenExtensions.forEach(function(val, i) {
+                        	everyChosenBlock += TGB[val].descriptor.blocks.length;
+                    });
+                    
+                    chosenExtensions.forEach(function(val, i) {
+                        chosenBlocksInstalled += TGB[val].descriptor.blocks.length;
+                        //console.clear();
+                        //log_load(true);
+                        console.log('%cInstalling extension %c' + val + '%c [' + math.round(chosenBlocksInstalled * 100 / everyChosenBlock, 1) + '%]', 'color:#34495e', 'color:#e67e22', 'color:#3498db');
+                        TGB[val].install();
+                	});
+                } else {
+					install_all();
+                }
+            } catch(e) {
+                install_all();
+            }
+            
+            //console.clear();
+            //log_load(false);
+            isInstalled = true;
+            console.log('%cExtensions loaded in ' + ((new Date - install_init_date) / 1000) + ' seconds!', 'color:#34495e');
+            //swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1000, type: "success"});
+        }
+    }, 250);
+}
+
+waitfor(isFlashAppDefined, true, 100, function() {
     extensions = Object.getOwnPropertyNames(TGB).sort();
     if(typeof is_creator !== "undefined" && !is_creator) {
-        OWstr = $('.overview').html();
+        OWstr = $('.overview').text();
         extensionSpecified = OWstr.search(/\[\u262f((\w|\&| |,){1,})\]/) > -1;
     }
 
@@ -1600,93 +1945,72 @@ waitfor(SWFready.isResolved, true, 100, function() {
         if(extensionSpecified) {
             chosenExtensions = OWstr.replace(/.(?!(\[?\u262f?((\w|\&| |,){1,})?\]))/g ,'');
             chosenExtensions = chosenExtensions.slice(chosenExtensions.indexOf('\u262f') + 1).split(',');
-            for(var a in chosenExtensions) {
-                if (chosenExtensions.hasOwnProperty(a)) {
-                  chosenExtensions[a] = chosenExtensions[a].trim();
+            chosenExtensions.forEach(function(val, a) {
+                  //chosenExtensions[a] = val.replace(/\n/g, ""); //I'm not sure if this is necessary, it's working alright without it for now.
+                  chosenExtensions[a] = val.trim();
+
                   if(extensions.indexOf(chosenExtensions[a]) === -1) {
                       extensionSpecified = false;
-                      break;
                   }
-                }
-            }
-        }
-    } catch(e) {}
-
-    if(versionCompare(GM_info.script.version, GM_getResourceText("version"), {zeroExtend: true}) < 0) {
-        toastr["info"]("A new version is available!<br>    <a href='https://monkeyguts.com/696.user.js'>Click here to update!</a>", "  TGB's Extension " + Number(GM_getResourceText("version")) + "!");
-    }
-    
-    setTimeout(function() {
-        swal({
-            title: "Load TGB's Extension?",
-            text: "If so, wait until the project finishes loading\n and then click on the \"Yes!\" button.",
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
-            confirmButtonText: "Yes!",
-            cancelButtonText: 'No! :(',
-            closeOnConfirm: false
-        }, function(isConfirmed) {
-            if(isConfirmed) {
-                swal({
-                    title: "Loading...",
-                    text: "Loading TGB's Extensions",
-                    type: "info",
-                    confirmButtonColor: "#DD6B55",
-                    confirmButtonText: "Ok!",
-                    closeOnConfirm: false
-                });
-                setTimeout(function() {
-                    console.log('Loading Extensions...');
-                    try {
-                        if(extensionSpecified) {
-                            for(var i in chosenExtensions) {
-                                if (chosenExtensions.hasOwnProperty(i)) {
-                                    console.log('Installing extension ' + chosenExtensions[i]);
-                                    TGB[chosenExtensions[i]].install();
-                                }
-                            }
-                        } else {
-                            for(var ext in extensions) {
-                                if (extensions.hasOwnProperty(ext)) {
-                                    console.log('Installing extension ' + extensions[ext]);
-                                    TGB[extensions[ext]].install();
-                                }
-                            }
-                        }
-                    } catch(e) {
-                        for(var i in extensions) {
-                            if (extensions.hasOwnProperty(i)) {
-                                console.log('Installing extension ' + extensions[i]);
-                                TGB[extensions[i]].install();
-                            }
-                        }
-                    }
-                    console.log('Extensions loaded!');
-                    swal({title: "Yay!", text: "The extension was successfully installed!", timer: 3000, type: "success"});
-                }, 50);
-            }
-        });
-    }, wait);
-
-    if(Scratch.FlashApp.model.attributes.isPublished === false) {
-        JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
-    }
-
-    if(typeof is_creator !== "undefined") {
-        overviewHtml = ($('#info textarea').html() === null) ? $('.overview::lt(1)').html() : $('#info textarea').html();
-        searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
-        numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
-
-        if(searchAddition !== false) {
-            if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
-                $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
-            } else {
-                $('.overview::lt(1)').html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 11), ''));
-            }
-            $('textarea[name=content]').focus( function(){
-                JSsetProjectBanner(commentAddition[numberAddition - 1]);
             });
         }
-    }
+    } catch(e) {}
+    
+    (function(window) { //AUTO-LOAD by GrannyCookies and modified by me
+        if(window.location.pathname.search(/\/*projects\/editor\/*/) > -1) { //Redefine console.log if the user is creating a new project through Create.
+            var old_console = window.console.log;
+            if(old_console) {
+                window.console.log = function() {
+                    old_console.apply(this, arguments);
+    
+                    for(var arg in arguments) {
+                        arg = arguments[arg];
+                        if(arg == "JSredirectTo") {
+                            //(function(window) {$('#player').append('<div id="TGB-Progress-Screen" style="background-color: rgba(15, 139, 192, 0.5);width: 482px;position: absolute;height: 362px;top: 50px;">');})(unsafeWindow);
+                            load();
+                        }
+                    }
+                };
+            }
+        }
+        
+        /*var old_setEditMode = window.JSsetEditMode;
+        if(old_setEditMode) {
+            window.JSsetEditMode = function() {
+                old_setEditMode.apply(this, arguments);
+                console.log("I do get called when you switch to edit mode, TGB.");
+            }
+        }*/
+        
+        var old_setStats = window.JSsetProjectStats;
+        if(old_setStats) {
+            window.JSsetProjectStats = function() {
+                old_setStats.apply(this, arguments);
+                if (arguments[0] != 0 || arguments[1] != 0) {
+                    load();
+                }
+            };
+        }
+        
+        if(Scratch.FlashApp.model.attributes.isPublished === false) {
+            JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
+        }
+
+        if(typeof is_creator !== "undefined") {
+            overviewHtml = ($('#info textarea').html() == null) ? $('.overview:lt(1)').html() : $('#info textarea').html();
+            searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
+            numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
+
+            if(searchAddition !== false) {
+                if(overviewHtml.search(/&lt;\u262f\d{1}&gt;/ > -1)) {
+                    $('.overview').slice(0,1).html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 10), ''));
+                } else {
+                    $('.overview').slice(0,1).html(overviewHtml.replace(overviewHtml.slice(searchAddition).slice(0, 11), ''));
+                }
+                $('textarea[name=content]').focus( function(){
+                    JSsetProjectBanner(commentAddition[numberAddition - 1]);
+                });
+            }
+        }
+    })(unsafeWindow);
 });
