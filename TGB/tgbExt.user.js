@@ -621,7 +621,11 @@ TGB = {
                 /*if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Counter '" + name + "' set to '" + val + "'.");
                 }*/
-                counters[name] = val;
+                if(isNaN(Number(val))) {
+                    counters[name] = val;
+                } else {
+                    counters[name] = Number(val);
+                }
             } else {
                 if(typeof is_creator !== "undefined" && is_creator) {
                     console.log("Too many counters.");
@@ -635,7 +639,11 @@ TGB = {
                     console.log("Counter '" + name + "' increased by '" + val + "'.");
                 }*/
                 if(typeof counters[name] != "undefined") {
-                    counters[name] += val;
+                    if(isNaN(Number(val))) {
+                        counters[name] += val;
+                    } else {
+                        counters[name] += Number(val);
+                    }
                 } else {
                     counters[name] = val;
                 }
@@ -1483,7 +1491,7 @@ TGB = {
             ['-'],
             ['r', 'Unicode of letter %n of %s', 'to_unicode', 1, 'Unicode'],
             ['r', 'Unicode %s as letter', 'from_unicode', 49],
-            ['r', 'Binary of %s', 'toBinary', 'Scratch'],
+            ['r', 'Binary of %s Spaced Octets: %b', 'toBinary', 'Scratch'],
             ['r', 'ASCII of %s', 'toAscii', '01000001']
         ],
 
@@ -1593,7 +1601,7 @@ TGB = {
         },
 
         word_amount: function(str) {
-            return str.split(" ").length;
+            return (str != "") ? str.trim().split(" ").length : 0;
         },
 
         word_pos: function(word, str) {
