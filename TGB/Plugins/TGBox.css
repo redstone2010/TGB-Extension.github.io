@@ -12,7 +12,8 @@
     position: absolute;
     top: 13px;
     border-radius: 100%;
-    right: -25px
+    right: -25px;
+    width: 50px;
 }
 #TGB_bg {
     position: absolute;
