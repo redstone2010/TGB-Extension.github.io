@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      2.0
+// @version      2.1
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -37,7 +37,7 @@ GM_addStyle(GM_getResourceText("sweet-alert"));
 GM_addStyle(GM_getResourceText("toastr"));
 
 //Extension Loader////////////////////////////////////////////////////////////////////////////
-var notRandomExt = ["Color", "Gamepad", "Program & Web", "Strings", "UI"], //Extensions that shouldn't be randomized (Color is there because it is randomized manually)
+var notRandomExt = ["Color", "zGamepad", "Program & Web", "Strings", "UI"], //Extensions that shouldn't be randomized (Color is there because it is randomized manually)
     everyBlock = [];
 
 function Extension(name /* String */, _descriptor /* Object */, _functions /* Object */, _msg /* String */, _status /* Number */) {
@@ -63,9 +63,6 @@ function Extension(name /* String */, _descriptor /* Object */, _functions /* Ob
         everyBlock.push(val);
 
         if(this.hasMenu) { //Proceed if the extension has a menu
-            if(this.name == "Data") {
-                console.log('aaaaaaaa');
-            }
             if(val[0] !== '-' && notRandomExt.indexOf(this.name) === -1) { //Proceed if the array means a space between the blocks and isn't one of the extensions in notRandomExt
                 var menus = val[1].match(/%m\.(\w+)/g) || []; //If match() returns null we set menus to [], that allows us to use the length property
                 
@@ -203,7 +200,7 @@ var Tips = [
     counters = {Help: Tips},
     storage;
 
-var hatFix = [false, false]; //Auto-reset Gamepad hats
+var hatFix = [false, false, false]; //Auto-reset hats
 
 
 var gamepadSupport = (!!navigator.getGamepads ||
@@ -823,7 +820,7 @@ TGB = {
 		menus: {
 		  button: buttonMenu,
 		  stick: ["left", "right"],
-		  axisValue: ["direction", "force"],
+		  axisValue: ["direction", "force"]
 		},
     },
     {
@@ -838,7 +835,7 @@ TGB = {
 		},
 
         hatStick: function(stick) {
-			if(!hatFix[1] && ext.getStick("direction", stick) != "false") {
+			if(!hatFix[1] && getStick("direction", stick) != "false") {
 				hatFix[1] = true;
 				return true;
 			} else {
@@ -1112,7 +1109,7 @@ TGB = {
             ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder"],
             //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
             ['-'],
-            ['h', 'when %b is true', 'whentrue'],
+            ['h', 'when %b is true', 'when_true'],
             [' ', '%s', '', 'Comment'],
             ['l', '%s', '', 'Comment'],
             [' ', 'Log %s', 'log', 'to the console.']
@@ -1346,7 +1343,15 @@ TGB = {
             });
         },*/
 
-      when_true: function(bool) {return bool;}
+      when_true: function(bool) {
+          if(!hatFix[2] && bool === true) {
+              hatFix[2] = true;
+              return true;
+          } else {
+              hatFix[2] = false;
+              return false;
+          }
+      }
     }),
 
     Sensing: new Extension(
