@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      2.2
+// @version      2.2.1
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -2053,7 +2053,7 @@ waitfor(isFlashAppDefined, true, 100, function() {
         }
 
         if(typeof is_creator !== "undefined") {
-            overviewHtml = ($('#info textarea').html() === null) ? $('.overview:lt(1)').html() : $('#info textarea').html();
+            overviewHtml = ($('#info textarea').html() == null) ? $('.overview:lt(1)').html() : $('#info textarea').html();
             searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
             numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
 
