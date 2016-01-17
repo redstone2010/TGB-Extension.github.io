@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      2.1
+// @version      2.2
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -103,6 +103,18 @@ function log_load(bool) {
 }
 log_load(false);
 
+//Block scrolling when the mouse is over a project////////////////////////////////////////////
+
+var oldScroll = window.onscroll;
+
+$(".stage").mouseover(function() {
+    unsafeWindow.onscroll = function () {window.scrollTo(0, 0);};
+});
+
+$(".stage").mouseout(function() {
+    unsafeWindow.onscroll = oldScroll;
+});
+
 //Wait for a condition to be true/////////////////////////////////////////////////////////////
 
 function waitfor(test, expectedValue, msec, callback) {
@@ -175,7 +187,8 @@ $.get("https://TGB-Extension.github.io/TGB/ScriptVersion", function(version){
 //Variables///////////////////////////////////////////////////////////////////////////////////
 var TGB = {},
     wait = 2.5,
-    isInstalled = false;
+    isInstalled = false,
+    creatingProj;
 
 var lang = "Google US English";
 
@@ -286,6 +299,16 @@ if(mimeTypes && mimeTypes[flashStr] && mimeTypes[flashStr].enabledPlugin &&
 if(!isPPAPI) {
     $('param:eq(2)').attr('value', 'transparent');
     $('.sweet-alert').append('<iframe class="iframeshim" frameBorder="0" scrolling="no" style="width:100%; height:100%; opacity: 0; z-index: 0; left: 50%; margin-left:-256px; pointer-events:none;"></iframe>');
+}
+
+//Detect if the user has just remixed the project to prevent bugs in Project & Web blocks//
+
+function justRemixed() {
+    if(data.project.id != window.location.pathname.replace(/\/*projects\/(\d+)\/*/, "$1")) {
+        return true;
+    } else {
+       return false;
+    }
 }
 
 //Local Storage Check///////////////////////////////////////////////////////////////////////
@@ -586,6 +609,7 @@ TGB = {
         blocks: [
             ['r', 'Counter %s', 'counter', 'Help'],
             ['r', 'Cookie %s', 'cookie', '!Cookie'],
+            ['r', 'Cookie %s from Project:%n', 'cookie_proj', 'Cookie', "Project ID"],
             ['-'],
             [' ', 'Set counter %s to %s', 's_counter', 'Score', 10],
             [' ', 'Increase counter %s by %s', 'i_counter', 'Score', 1],
@@ -610,6 +634,12 @@ TGB = {
         cookie: function(name) {
             if (storage) {
                 return JSON.parse(localStorage['TGB-cookies'])[project_id][name];
+            }
+        },
+
+        cookie_proj: function(name, proj) {
+            if (storage && !isNaN(proj)) {
+                return JSON.parse(localStorage['TGB-cookies'])[proj][name];
             }
         },
 
@@ -1106,7 +1136,7 @@ TGB = {
             ['r', 'Custom Hash %n', 'hash', '1'],
             ['r', 'Query Parameter %s', 'php_get', 'allowfullscreen'],
             ['-'],
-            ['w', 'Open %m.open %s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder"],
+            ['w', 'Open %m.open %s with Query String:%s', 'TGB_open', 'user profile of', (typeof data !== "undefined") ? data.project.creator : "TheGameBuilder", ""],
             //[' ', 'Open Youtube video with ID:%s at x:%s y:%s', 'youtube', '0Bmhjf0rKe8', 0, 0], Disabled due to some strange bug that makes it not show the player.
             ['-'],
             ['h', 'when %b is true', 'when_true'],
@@ -1122,15 +1152,15 @@ TGB = {
     },
     {
         proj_title: function() {
-            if(typeof is_creator !== "undefined") {
-                return (is_creator) ? document.getElementsByName("title")[0].value : document.getElementById("title").innerHTML;
+            if(typeof is_creator !== "undefined") { //Detects when you're creating a project while logged out
+                return (is_creator ? document.getElementsByName("title")[0].value : document.getElementById("title").innerHTML) + (justRemixed() ? " remix" : ""); //The concatenation *almost* fixes the project title for projects that have just been remixed, as people can change it before reloading the page.
             } else {
-                return false;
+                return "Untitled";
             }
         },
 
         proj_id: function() {
-            return project_id;
+            return (justRemixed()) ? window.location.pathname.replace(/\/*projects\/(\d+)\/*/, "$1") : project_id;
         },
 
         info: function() {
@@ -1138,13 +1168,13 @@ TGB = {
         },
 
         notes: function() {
-            return notes;
+            return (justRemixed()) ? "" : notes;
         },
 
         lst_upd: function(callback) {
             var GMT_time = Date.now();
             if(GMT_time - project_modified.last_call > 300000) { //Display a cached value if last AJAX call was less than 5 minutes ago.
-                $.get("", function(data) {
+                $.get("", function(data) {//I don't know why and how there is no url here, but I guess it grabs the html of the page you're in if you leave it null (I literally forgot the day I programmed this)
                     var modifiedDate = $(data).filter("script:eq(7)").html().match(/modifiedDate: .+,/)[0].match(/'.+'/)[0];
                     modifiedDate = modifiedDate.substr(1, modifiedDate.length - 2).replace(/\\u002D/g, "-");
                     
@@ -1156,13 +1186,13 @@ TGB = {
                 callback((GMT_time + new Date().getTimezoneOffset() * 60 * 1000 - Date.parse(project_modified.date)) / (1000 * 60 * 60 * 24));
             }
         },
-
+        
         shared: function() {
-            return shared;
+            return (justRemixed()) ? false : shared;
         },
 
         remixed: function() {
-            return remixed;
+            return remixed || justRemixed();
         },
 
         sprites: function() {
@@ -1174,7 +1204,10 @@ TGB = {
         },
 
         comments: function(callback) {
-            if(comments_amount == -1) {
+            if(justRemixed()) {
+                comments_ammount = 0;
+                callback(0);
+            } else if(comments_amount == -1) {
                 var n = $("#comment-count").html();
                 
                 if(n == "") { //NOTE: This piece of code does not update the amount of comments, it only downloads it once.
@@ -1286,10 +1319,13 @@ TGB = {
             }
         },
 
-        TGB_open: function(type, src, callback) {
+        TGB_open: function(type, src, query, callback) {
+            var new_type = 0;
+            query = query.trim();
+
             switch(type) {
                 case "user profile of":
-                    var new_type = "users";
+                    new_type = "users";
                     break;
                 case "Project":
                     if(isNaN(src)) {
@@ -1306,21 +1342,23 @@ TGB = {
                     new_type = "discuss/topic";
                     break;
             }
-            swal({
-                  title: "Open" + (type == 'user profile of') ? 'User Profile' : type,
-                  text: "Do you want to open the profile of '" + src + "' in a new tab?",
-                  type: "warning",
-                  showCancelButton: true,
-                  confirmButtonColor: "#DD6B55",
-                  confirmButtonText: "Yes, open it!"
-            }, function(isConfirm){
-                if (isConfirm) {
-                    window.open('http://scratch.mit.edu/' + new_type + '/' + src);
-                    callback();
-                } else {
-                    callback();
-                }
-            });
+            if(new_type !== 0) { //This prevents custom types from showing up.
+                swal({
+                    title: "Open " + type,
+                    text: "Do you want to open the " + (type == "user profile of" ? "profile of" : type) + " '" + src + "' in a new tab?",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes, open it!"
+                }, function(isConfirm){
+                    if (isConfirm) {
+                        window.open('http://scratch.mit.edu/' + new_type + '/' + src + ((query != "" && query.indexOf("=") > -1 && new_type != "users") ? (query.charAt(0) == "?" ? query : "?" + query) : "/")); //The check for the user profile option is just in case there's something malicious that can be done with it that I don't know.
+                        callback();
+                    } else {
+                        callback();
+                    }
+                });
+            }
         },
 
         log: function(msg) {
@@ -1919,11 +1957,11 @@ function load() {
                 if(extensionSpecified) {
                     var chosenBlocksInstalled = 0,
                         everyChosenBlock = 0;
-                    
+
                     chosenExtensions.forEach(function(val, i) {
                         	everyChosenBlock += TGB[val].descriptor.blocks.length;
                     });
-                    
+
                     chosenExtensions.forEach(function(val, i) {
                         chosenBlocksInstalled += TGB[val].descriptor.blocks.length;
                         //console.clear();
@@ -1937,7 +1975,7 @@ function load() {
             } catch(e) {
                 install_all();
             }
-            
+
             //console.clear();
             //log_load(false);
             isInstalled = true;
@@ -1945,6 +1983,28 @@ function load() {
             //swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1000, type: "success"});
         }
     }, 250);
+}
+
+//AUTO-LOAD
+if(window.location.pathname.search(/\/*projects\/editor\/*/) > -1) { //Redefine console.log if the user is creating a new project through Create.
+    var old_console = window.console.log;
+    if(old_console) {
+        window.console.log = function() {
+            old_console.apply(this, arguments);
+
+            for(var arg in arguments) {
+                arg = arguments[arg];
+
+                if(arg.indexOf("AScreateProject") > -1) {
+                    creatingProj = true;
+                    console.log("create");
+                } else if(arg.indexOf("Initialized") > -1 ) {
+                    load();
+                    console.log("init");
+                }
+            }
+        };
+    }
 }
 
 waitfor(isFlashAppDefined, true, 100, function() {
@@ -1970,23 +2030,16 @@ waitfor(isFlashAppDefined, true, 100, function() {
     } catch(e) {}
     
     (function(window) { //AUTO-LOAD by GrannyCookies and modified by me
-        if(window.location.pathname.search(/\/*projects\/editor\/*/) > -1) { //Redefine console.log if the user is creating a new project through Create.
-            var old_console = window.console.log;
-            if(old_console) {
-                window.console.log = function() {
-                    old_console.apply(this, arguments);
-    
-                    for(var arg in arguments) {
-                        arg = arguments[arg];
-                        if(arg == "JSredirectTo") {
-                            //(function(window) {$('#player').append('<div id="TGB-Progress-Screen" style="background-color: rgba(15, 139, 192, 0.5);width: 482px;position: absolute;height: 362px;top: 50px;">');})(unsafeWindow);
-                            load();
-                        }
-                    }
-                };
-            }
+        var old_setStats = window.JSsetProjectStats;
+        if(old_setStats) {
+            window.JSsetProjectStats = function() {
+                old_setStats.apply(this, arguments);
+                if (arguments[0] !== 0 || arguments[1] !== 0) {
+                    load();
+                }
+            };
         }
-        
+
         /*var old_setEditMode = window.JSsetEditMode;
         if(old_setEditMode) {
             window.JSsetEditMode = function() {
@@ -1994,23 +2047,13 @@ waitfor(isFlashAppDefined, true, 100, function() {
                 console.log("I do get called when you switch to edit mode, TGB.");
             }
         }*/
-        
-        var old_setStats = window.JSsetProjectStats;
-        if(old_setStats) {
-            window.JSsetProjectStats = function() {
-                old_setStats.apply(this, arguments);
-                if (arguments[0] != 0 || arguments[1] != 0) {
-                    load();
-                }
-            };
-        }
-        
+
         if(Scratch.FlashApp.model.attributes.isPublished === false) {
             JSsetProjectBanner((Scratch.FlashApp.isEditMode) ? 'To share projects using this extension you have to click the "Share" button found on the <a href="' + 'http://scratch.mit.edu/projects/' + Scratch.FlashApp.model.id + '">Project Page</a>.' : 'To share projects using this extension you have to click the "Share" button found on this page.');
         }
 
         if(typeof is_creator !== "undefined") {
-            overviewHtml = ($('#info textarea').html() == null) ? $('.overview:lt(1)').html() : $('#info textarea').html();
+            overviewHtml = ($('#info textarea').html() === null) ? $('.overview:lt(1)').html() : $('#info textarea').html();
             searchAddition = (overviewHtml.search(/&lt;\u262f\d{1}|\d{2}&gt;/) < 0) ? false : (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? overviewHtml.search(/&lt;\u262f\d{1}&gt;/) : overviewHtml.search(/&lt;\u262f\d{2}&gt;/);
             numberAddition = (overviewHtml.search(/&lt;\u262f\d{1}&gt;/) > -1) ? Number(overviewHtml.charAt(searchAddition + 5)) : Number(overviewHtml.substr(searchAddition + 5, searchAddition + 6));
 
