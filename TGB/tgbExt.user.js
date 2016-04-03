@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      2.2.1
+// @version      2.3
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -13,6 +13,7 @@
 // @resource     TGBox http://tgb-extension.github.io/TGB/Plugins/TGBox.css
 // @resource     sweet-alert http://tgb-extension.github.io/TGB/Plugins/sweet-alert.css
 // @resource     toastr http://tgb-extension.github.io/TGB/Plugins/toastr.min.css
+// @resource     menu http://tgb-extension.github.io/TGB/Plugins/menu.css
 // @require      http://tgb-extension.github.io/TGB/Plugins/math.min.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/php-get.js
 // @require      http://tgb-extension.github.io/TGB/Plugins/toastr.js
@@ -32,6 +33,7 @@ $.getScript("https://tgb-extension.github.io/TGB/Plugins/sweet-alert.min.js");
 
 //CSS ////////////////////////////////////////////////////////////////////////////////////////
 
+GM_addStyle(GM_getResourceText("menu")); //Under development
 GM_addStyle(GM_getResourceText("TGBox"));
 GM_addStyle(GM_getResourceText("sweet-alert"));
 GM_addStyle(GM_getResourceText("toastr"));
@@ -44,7 +46,7 @@ function Extension(name /* String */, _descriptor /* Object */, _functions /* Ob
     this.functions = _functions || {};
     this.functions._shutdown = function() {};
     this.functions._getStatus = function() {
-        
+
         // Status reporting code
         // Use this to report missing hardware, plugin or unsupported browser
         return {
@@ -65,15 +67,15 @@ function Extension(name /* String */, _descriptor /* Object */, _functions /* Ob
         if(this.hasMenu) { //Proceed if the extension has a menu
             if(val[0] !== '-' && notRandomExt.indexOf(this.name) === -1) { //Proceed if the array means a space between the blocks and isn't one of the extensions in notRandomExt
                 var menus = val[1].match(/%m\.(\w+)/g) || []; //If match() returns null we set menus to [], that allows us to use the length property
-                
+
                 if(menus.length > 0) { //Proceed if the block uses inputs from a menu
                     var usedMenus = menus.join("").split("%m.").slice(1), //Remove %m. from the menu names
-                        everyInput = val[1].match(/%n|%s|%c|(%m\.(\w+))/g), //This regex helps us find out every input the block has 
+                        everyInput = val[1].match(/%n|%s|%c|(%m\.(\w+))/g), //This regex helps us find out every input the block has
                         eLength = everyInput.length; //This is to optimize the loop as it would have to check for the length of val every iteration
-                    
+
                     for(var n = 0; n < eLength; n++) { //Iterate over every block input
                         var menusIndex = menus.indexOf(everyInput[n]); //Find out if input n is a menu and it's index inside the menus array
-                        
+
                         if(menusIndex > -1) { //Proceed if input n is a menu
                             val[n + 3] = math.pickRandom(this.descriptor.menus[usedMenus[menusIndex]]); //Set the default to a random menu option
                         }
@@ -157,6 +159,19 @@ function isPageVisible() {
     return document.visibilityState === "visible";
 }
 
+//List Voices/////////////////////////////////////////////////////////////////////////////////
+//SpeechSynthesis is async now for some reason, this function won't work until they fix it.
+/*function _get_voices() {
+    var ret = [];
+    var voices = speechSynthesis.getVoices();
+
+    for(var i = 0; i < voices.length; i++ ) {
+        ret.push(voices[i].name);
+    }
+
+    return ret;
+}*/
+
 //Toastr Configuration////////////////////////////////////////////////////////////////////////
 
 toastr.options = {
@@ -200,7 +215,8 @@ var keysPressed = [],
     last_h_value = false;
 
 var scratcher,
-    userLanguage = window.navigator.language; //Check for the userLanguage prop. also in case IE needs support.
+    userLanguage = window.navigator.language, //Check for the userLanguage prop. also in case IE needs support.
+    usingHTTP = false;
     //online; Activate for Firefox version
 
 var Tips = [
@@ -325,19 +341,6 @@ try {
     fail && (storage = false);
 
 } catch (exception) {}
-
-//List Voices/////////////////////////////////////////////////////////////////////////////////
-
-function _get_voices() {
-    var ret = [];
-    var voices = speechSynthesis.getVoices();
-
-    for(var i = 0; i < voices.length; i++ ) {
-         ret.push(voices[i].name);
-    }
-
-    return ret;
-}
 
 //Key Checks//////////////////////////////////////////////////////////////////////////////////
 
@@ -873,20 +876,20 @@ TGB = {
 				return false;
 			}
 		},
-		
+
 		getButton: function(name) {
 			return getButton(name);
 		},
-		
+
 		getTrigger: function(which) {
 			which = (which == "left") ? 6 : 7;
 			return gamepad.buttons[which].value;
 		},
-		
+
 		getStick: function(what, stick) {
 			return getStick(what, stick);
 		},
-		
+
 		whichButton: function() {
 			var result = buttons[gamepad.buttons.map(function(e) {return e.pressed;}).indexOf(true)];
 			if(typeof result == "undefined") {
@@ -1177,16 +1180,16 @@ TGB = {
                 $.get("", function(data) {//I don't know why and how there is no url here, but I guess it grabs the html of the page you're in if you leave it null (I literally forgot the day I programmed this)
                     var modifiedDate = $(data).filter("script:eq(7)").html().match(/modifiedDate: .+,/)[0].match(/'.+'/)[0];
                     modifiedDate = modifiedDate.substr(1, modifiedDate.length - 2).replace(/\\u002D/g, "-");
-                    
+
                     project_modified = {date: new Date(modifiedDate), last_call: new Date};
-    
+
                     callback((GMT_time + new Date().getTimezoneOffset() * 60 * 1000 - Date.parse(project_modified.date)) / (1000 * 60 * 60 * 24));
                 });
             } else {
                 callback((GMT_time + new Date().getTimezoneOffset() * 60 * 1000 - Date.parse(project_modified.date)) / (1000 * 60 * 60 * 24));
             }
         },
-        
+
         shared: function() {
             return (justRemixed()) ? false : shared;
         },
@@ -1209,10 +1212,14 @@ TGB = {
                 callback(0);
             } else if(comments_amount == -1) {
                 var n = $("#comment-count").html();
-                
-                if(n == "") { //NOTE: This piece of code does not update the amount of comments, it only downloads it once.
+
+                if(n == "" || typeof n == "undefined") { //NOTE: This piece of code does not update the amount of comments, it only downloads it once.
                     $.get("https://scratch.mit.edu/site-api/comments/project/" + project_id + "/", function(data) {
-                        comments_amount = $(data).filter("span").data().controlCommentCount;
+                        try {
+                            comments_amount = $(data).filter("span").data().controlCommentCount;
+                        } catch(e) {
+                            comments_amount = 0;
+                        }
                         callback(comments_amount);
                     });
                 } else {
@@ -1310,7 +1317,7 @@ TGB = {
                 return '';
             }
         },
-        
+
         php_get: function(param) {
             if(typeof $_GET[param] != 'undefined') {
                 return $_GET[param];
@@ -1463,7 +1470,7 @@ TGB = {
         ],
 
         menus: {
-            voices: _get_voices(),
+            voices: ["native", "Google Deutsch", "Google US English", "Google UK English Female", "Google UK English Male", "Google español", "Google español de Estados Unidos", "Google français", "Google हिन्दी", "Google Bahasa Indonesia", "Google italiano", "Google 日本語", "Google 한국의", "Google Nederlands", "Google polski", "Google português do Brasil", "Google русский", "Google 普通话（中国大陆）", "Google 粤語（香港）", "Google 國語（臺灣）"], //Use _get_voices() in case SpeechSynthesis stops being async
         }
     },
     {
@@ -1788,7 +1795,8 @@ TGB = {
             ['b', 'Creator?', 'creator'],
             ['b', 'Admin?', 'admin'],
             ['-'],
-            ['b', 'Online?', 'online']
+            ['b', 'Offline?', 'offline'],
+            ['b', 'Is using HTTP polling?', 'http_poll']
         ],
     },
     {
@@ -1822,13 +1830,17 @@ TGB = {
             return admin;
         },
 
-        online: function() {
+        offline: function() {
             //"if" and "else" disabled until Firefox version comes out.
             /*if(contains(navigator.userAgent, "Firefox")) {
                 return online;
             } else {*/
-            return window.navigator.onLine;
+            return !window.navigator.onLine;
             //}
+        },
+        
+        http_poll: function() {
+           return usingHTTP;
         }
     })
 };
@@ -1940,8 +1952,6 @@ function install_all() {
     
     extensions.forEach(function(val) {
         blocksInstalled += TGB[val].descriptor.blocks.length;
-        //console.clear();
-        //log_load(true);
         console.log('%cInstalling extension %c' + val + '%c [' + math.round(blocksInstalled * 100 / everyBlock.length, 1) + '%]', 'color:#34495e', 'color:#e67e22', 'color:#3498db');
         TGB[val].install();
     });
@@ -1959,18 +1969,16 @@ function load() {
                         everyChosenBlock = 0;
 
                     chosenExtensions.forEach(function(val, i) {
-                        	everyChosenBlock += TGB[val].descriptor.blocks.length;
+                        everyChosenBlock += TGB[val].descriptor.blocks.length;
                     });
 
                     chosenExtensions.forEach(function(val, i) {
                         chosenBlocksInstalled += TGB[val].descriptor.blocks.length;
-                        //console.clear();
-                        //log_load(true);
                         console.log('%cInstalling extension %c' + val + '%c [' + math.round(chosenBlocksInstalled * 100 / everyChosenBlock, 1) + '%]', 'color:#34495e', 'color:#e67e22', 'color:#3498db');
                         TGB[val].install();
-                	});
+                    });
                 } else {
-					install_all();
+                    install_all();
                 }
             } catch(e) {
                 install_all();
@@ -1982,32 +1990,68 @@ function load() {
             console.log('%cExtensions loaded in ' + ((new Date - install_init_date) / 1000) + ' seconds!', 'color:#34495e');
             //swal({title: "Yay!", text: "The extension was successfully installed!", timer: 1000, type: "success"});
         }
-    }, 250);
+    }, 500);
 }
 
 //AUTO-LOAD
-if(window.location.pathname.search(/\/*projects\/editor\/*/) > -1) { //Redefine console.log if the user is creating a new project through Create.
-    var old_console = window.console.log;
+//if(window.location.pathname.search(/\/*projects\/editor\/*/) > -1) { //Redefine console.log if the user is creating a new project through Create.
+    /*old_console = window.console.log;
     if(old_console) {
         window.console.log = function() {
-            old_console.apply(this, arguments);
+            console.log.apply(this, arguments);
 
             for(var arg in arguments) {
                 arg = arguments[arg];
 
                 if(arg.indexOf("AScreateProject") > -1) {
                     creatingProj = true;
-                    console.log("create");
-                } else if(arg.indexOf("Initialized") > -1 ) {
+                    //console.log("create");
+                } else if(arg.indexOf("Initialized") > -1 || arg.indexOf("Successfully") > -1 || (arg.indexOf("Fallin back to HTTP polling.") > -1 && !isInstalled)) {
                     load();
-                    console.log("init");
+                    //console.log("init");
+                } else if(arg.indexOf("HTTP polling.") > -1) {
+                    usingHTTP = true;
+                    //console.log("Fallback detected.");
                 }
             }
         };
     }
-}
+}*/
 
-waitfor(isFlashAppDefined, true, 100, function() {
+
+//Redefined Console.error to supress error messages on the console.
+unsafeWindow.console.error = (function(_super) {
+    return function() {
+        var args = [].slice.call(arguments);
+        for(var arg in args) {
+            if(args[arg].indexOf("No location specified.") > -1) {
+                return;
+            }
+            return _super.apply(this, args);
+        }
+    };
+})(unsafeWindow.console.error);
+
+
+//Redefined Console.log to load, detect HTTP polling and supress error messages on the console.
+unsafeWindow.console.log = (function(_super) {
+    return function() {
+        var args = [].slice.call(arguments);
+        for(var arg in args) {
+            if(args[arg].indexOf("No location specified.") > -1) {
+                return;
+            } else if(args[arg].indexOf("AScreateProject") > -1) { //maybe check for initialize
+                creatingProj = true;
+            } else if(args[arg].indexOf("Successfully connected to TCP") > -1 || args[arg].indexOf("Falling back to HTTP polling") > -1) {
+                load();
+            }
+            if(args[arg].indexOf("HTTP polling.") > -1) {usingHTTP = true;}
+            return _super.apply(this, args);
+        }
+    };
+})(unsafeWindow.console.log);
+
+waitfor(isFlashAppDefined, true, 1000, function() {
     extensions = Object.getOwnPropertyNames(TGB).sort();
     if(typeof is_creator !== "undefined" && !is_creator) {
         OWstr = $('.overview').text();
@@ -2034,7 +2078,7 @@ waitfor(isFlashAppDefined, true, 100, function() {
         if(old_setStats) {
             window.JSsetProjectStats = function() {
                 old_setStats.apply(this, arguments);
-                if (arguments[0] !== 0 || arguments[1] !== 0) {
+                if ((arguments[0] !== 0 || arguments[1] !== 0) && arguments[2] !== true) {
                     load();
                 }
             };
