@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      2.3
+// @version      2.3.1
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -212,6 +212,7 @@ var project_modified = {last_call: Date.now() - 300000}, //Allows us to check th
 
 var keysPressed = [],
     keyDetection = false,
+    whichKey = [],
     last_h_value = false;
 
 var scratcher,
@@ -278,7 +279,7 @@ waitfor(isDataDefined, true, 100, function() {
     // Semi-fix for sharing projects with extensions!
     if(is_creator) {
         Scratch.Project.ShareBar.prototype.shareProject = function() {
-            this.model.share();
+            JSshareProject()
         };
     }
 });
@@ -371,6 +372,10 @@ function menuCheck(key) {
     default:
       return isKeyPressed(key_code.charCodeAt(0));
   }
+}
+
+function keyRemove(elementToRemove){
+    whichKey = whichKey.filter(function(el){return el !== elementToRemove});
 }
 
 //Signed Decimal Fix//Thanks for explaining it to me, DadOfMrLog!///////////////////////////
@@ -708,7 +713,7 @@ TGB = {
                         cookies[project_id] = {};
                     }
                     cookies[project_id][name] = val;
-                    
+
                 	storage.setItem('TGB-cookies', JSON.stringify(cookies));
                 } else {
                     if(typeof is_creator !== "undefined" && is_creator) {
@@ -730,7 +735,7 @@ TGB = {
                     if(typeof cookies[project_id] === "undefined") {
                         cookies[project_id] = {};
                         cookie = cookies[project_id];
-                    } 
+                    }
                     if(typeof cookie[name] !== "undefined") {
                         if(isNaN(val) || isNaN(cookie[name])) {
                             cookie[name] += val;
@@ -1442,8 +1447,7 @@ TGB = {
 
         which_key: function() {
             if(document.activeElement === $('object#scratch')[0]) {
-                key = keysPressed.indexOf(true);
-                return key;
+                return (typeof whichKey[whichKey.length - 1] == 'undefined' || keysPressed.indexOf(true) < 0) ? -1 : whichKey[whichKey.length - 1] ;
             } else {
                 return -1;
             }
@@ -1838,7 +1842,7 @@ TGB = {
             return !window.navigator.onLine;
             //}
         },
-        
+
         http_poll: function() {
            return usingHTTP;
         }
@@ -1850,9 +1854,9 @@ TGB = {
 (function() { //Create a scope for it
     var color_desc = TGB.Color.descriptor,
         date_desc = TGB.Date.descriptor;
-        
+
     var rand_color_1 = math.randomInt(0,2);
-        
+
     color_desc.blocks[5][3] = color_desc.menus.rgb[rand_color_1];
     color_desc.blocks[5][4] = [16711680, 65280, 255][rand_color_1];
 })();
@@ -1872,10 +1876,14 @@ TGB.Sensing.onInstall = function() {
         $(document).on("keyup keydown", function(e) {
             switch(e.type) {
                 case "keydown" :
+                    if(keysPressed[e.keyCode] === false || typeof keysPressed[e.keyCode] === 'undefined') {
+                        whichKey.push(e.keyCode);
+                    }
                     keysPressed[e.keyCode] = true;
                     break;
                 case "keyup" :
                     keysPressed[e.keyCode] = false;
+                    keyRemove(e.keyCode);
                     break;
             }
         });
@@ -2072,7 +2080,7 @@ waitfor(isFlashAppDefined, true, 1000, function() {
             });
         }
     } catch(e) {}
-    
+
     (function(window) { //AUTO-LOAD by GrannyCookies and modified by me
         var old_setStats = window.JSsetProjectStats;
         if(old_setStats) {
