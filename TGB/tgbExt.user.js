@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         TGB's Extensions
-// @version      2.3.1
+// @version      2.3.2
 // @author       TheGameBuilder on Scratch
 // @description  Make good use of them! :D
 // @namespace    http://felizolinha.github.io
@@ -255,7 +255,8 @@ var buttons = [
     "up",
     "down",
     "left",
-    "right"
+    "right",
+    "none"
 ];
 
 var buttonMenu = [];
